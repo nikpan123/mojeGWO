@@ -2,12 +2,13 @@ import http from 'node:http';
 import {fork} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 import path from 'node:path';
+import {access} from 'node:fs/promises';
 import {root,parseEnvironment} from '../lib/environment.mjs';
 export {createDashboard,readiness} from './environment-server.mjs';
 
 // Each environment runs the same shared code with its own process settings.
 // Keeping that context immutable prevents a running test or timer from switching accounts.
-export async function createApplication({defaultEnvironment='test'}={}) {
+export async function createApplication({defaultEnvironment='test',reportDirectory=path.join(root,'.health')}={}) {
   const selected=parseEnvironment(defaultEnvironment),workers=new Map(),pending=new Map();
   let closing=false;
   async function backend(environment) {
@@ -29,6 +30,13 @@ export async function createApplication({defaultEnvironment='test'}={}) {
     if(req.headers.host!==new URL(origin).host){res.writeHead(403);return res.end('Panel jest dostępny tylko lokalnie.');}
     const url=new URL(req.url,origin);
     if(req.method==='GET'&&url.pathname==='/'){res.writeHead(302,{Location:'/'+selected+'/'});return res.end();}
+    const legacyReport=url.pathname.match(/^\/report\/([a-f0-9-]{36})(?:\/|$)/);
+    if(req.method==='GET'&&legacyReport){
+      const matches=[];
+      for(const environment of ['test','prod'])if(await access(path.join(reportDirectory,environment,'runs',legacyReport[1],'report')).then(()=>true,()=>false))matches.push(environment);
+      if(matches.length===1){res.writeHead(302,{Location:'/'+matches[0]+url.pathname+url.search});return res.end();}
+      res.writeHead(404);return res.end('Nie znaleziono raportu. Otwórz go z historii właściwego środowiska.');
+    }
     const match=url.pathname.match(/^\/(test|prod)(\/.*)?$/);
     if(!match){res.writeHead(404);return res.end('Nie znaleziono.');}
     if(!match[2]){res.writeHead(302,{Location:'/'+match[1]+'/'});return res.end();}

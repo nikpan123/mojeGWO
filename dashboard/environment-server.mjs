@@ -68,14 +68,14 @@ export async function createDashboard({ dataDir = dataRoot, checkReadiness = rea
       const url = new URL(req.url, origin);
       if (req.method === 'POST') {
         if (req.headers.origin !== origin || req.headers['x-health-token'] !== token) return json(403, { error: 'Odśwież panel przed uruchomieniem.' });
-        if(environment!=='prod'&&['/api/notifications','/api/notifications/test','/api/schedule','/api/schedule/run'].includes(url.pathname))return json(400,{error:'Ta funkcja jest dostępna na PROD.'});
+        if(environment!=='prod'&&['/api/notifications','/api/notifications/test','/api/schedule','/api/schedule/run','/api/schedule/events/clear'].includes(url.pathname))return json(400,{error:'Ta funkcja jest dostępna na PROD.'});
         if(url.pathname==='/api/notifications'||url.pathname==='/api/notifications/test'){
           let body='';for await(const chunk of req){body+=chunk;if(Buffer.byteLength(body)>2000)return json(413,{error:'Za dużo danych.'});}
           try{if(url.pathname.endsWith('/test'))return json(200,{delivery:await notifications.test()});return json(200,{notifications:await notifications.save(body?JSON.parse(body):{})});}catch(e){return json(400,{error:e.message});}
         }
-        if(url.pathname==='/api/schedule'||url.pathname==='/api/schedule/run'){
+        if(url.pathname==='/api/schedule'||url.pathname==='/api/schedule/run'||url.pathname==='/api/schedule/events/clear'){
           let body='';for await(const chunk of req){body+=chunk;if(Buffer.byteLength(body)>4096)return json(413,{error:'Za dużo danych.'});}
-          try{const input=body?JSON.parse(body):{};const schedule=url.pathname.endsWith('/run')?await scheduler.runNow():await scheduler.save(input);return json(200,{schedule});}catch(e){return json(400,{error:e.message});}
+          try{const input=body?JSON.parse(body):{};const schedule=url.pathname.endsWith('/clear')?await scheduler.clearEvents():url.pathname.endsWith('/run')?await scheduler.runNow():await scheduler.save(input);return json(200,{schedule});}catch(e){return json(400,{error:e.message});}
         }
         if(url.pathname==='/api/load-stop'){
           if(!activeRun||activeRun.suite!=='load')return json(409,{error:'Brak aktywnego obciążenia.'});

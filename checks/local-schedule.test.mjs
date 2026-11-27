@@ -13,3 +13,18 @@ test('oba zestawy kolejno; porażka pierwszego nie blokuje drugiego; zapis i odt
 test('zajęty termin jest pomijany, bez nadrabiania lawiny po uśpieniu',()=>fixture(async({schedule,calls,advance,setBusy})=>{await schedule.save(config);setBusy(true);advance(10*60*60000);await schedule.tick();assert.equal(calls.length,0);setBusy(false);await schedule.tick();assert.equal(calls.length,0);assert.ok(schedule.state().events.some(e=>e.type==='SKIPPED'));advance(30*60000);await schedule.tick();assert.equal(calls.length,2);}));
 test('wyłączenie zatrzymuje następne terminy i chroni przed starym formularzem',()=>fixture(async({schedule,calls,advance})=>{await schedule.save(config);await assert.rejects(schedule.save(config),/zmienił/);await schedule.save({...config,revision:1,enabled:false});advance(60*60000);await schedule.tick();assert.equal(calls.length,0);assert.equal(schedule.state().nextRunAt,null);}));
 test('wyłączenie w trakcie przebiegu zatrzymuje kolejny zestaw',()=>fixture(async({schedule,dependencies,calls})=>{dependencies.startRun=async options=>{calls.push(options);await schedule.save({...config,revision:schedule.state().revision,enabled:false});return {id:'1'};};schedule.close();const next=await createLocalSchedule(dependencies);schedule=next;await schedule.save(config);await schedule.runNow();for(let i=0;i<100&&schedule.state().running;i++)await new Promise(r=>setTimeout(r,5));assert.equal(calls.length,1);assert.equal(schedule.state().enabled,false);next.close();}));
+
+test('czyszczenie dziennika zachowuje terminy, ustawienia i raporty',()=>fixture(async({schedule,file,dependencies})=>{
+ await schedule.save(config);const before=schedule.state();
+ const report=path.join(path.dirname(file),'history.json');await fs.writeFile(report,'[{"status":"PASS"}]');
+ const after=await schedule.clearEvents();assert.deepEqual(after.events,[]);
+ for(const field of ['enabled','intervalMinutes','profileId','nextRunAt','revision'])assert.equal(after[field],before[field]);
+ assert.deepEqual(after.suites,before.suites);assert.equal(await fs.readFile(report,'utf8'),'[{"status":"PASS"}]');
+ const reloaded=await createLocalSchedule(dependencies);assert.deepEqual(reloaded.state().events,[]);reloaded.close();
+}));
+
+test('czyszczenie w trakcie cyklu nie zatrzymuje następnego zestawu',()=>fixture(async({schedule,calls,advance})=>{
+ await schedule.save(config);advance(30*60000);
+ const cycle=schedule.tick();await schedule.clearEvents();await cycle;
+ assert.deepEqual(calls.map(call=>call.suite),['functional','services']);assert.equal(schedule.state().enabled,true);
+}));

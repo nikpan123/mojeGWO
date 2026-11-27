@@ -34,6 +34,30 @@ Otwórz adres wyświetlony w terminalu. Panel próbuje portu **4182**, następni
 - **k6, opcjonalnie** — ręczne testy obciążeniowe wyłącznie na TEST; silnik umieść w `tools/k6.exe`.
 - **Windows DPAPI** — szyfrowanie haseł zapisanych w profilach. Pliki kont, sesji i wyników pozostają lokalne i są wykluczone z Git.
 
+## Nauczyciele i materiały
+
+1. Wybierz **TEST lub PROD → Nauczyciele i materiały → Dodaj nauczyciela**. Podaj nazwę profilu, e-mail i hasło. W TEST uzupełnij również własne logowanie GitLaba albo użyj wspólnego z `.env.test`.
+2. Zapisz profil i kliknij **Pobierz dostępy z konta**. Panel potwierdzi tożsamość i pokaże dostępne aplikacje oraz multipodręczniki. Nie loguj się równolegle na to samo konto.
+3. Przy wybranym materiale kliknij **Dodaj do kontroli**, wybierz sposób sprawdzania i zapisz. Multipodręcznik może być sprawdzany ze zmianą stron; aplikacja — jako sam dostęp, Kompozytor ze wskazaną klasą, katalog kart pracy lub dopasowany wzorzec. Samo pobranie listy nie przypisuje materiałów do testów.
+4. Użyj **Wybierz do testów** przy profilu albo listy **Nauczyciel** w widoku uruchamiania. Testy obejmą jego przypisane, włączone materiały. W harmonogramie nauczyciela wybiera się osobno.
+
+<details>
+<summary>Zrzuty ekranu — przykładowe dane nauczyciela</summary>
+
+**Dodawanie nauczyciela**
+
+![Formularz dodawania nauczyciela](docs/images/dodaj-nauczyciela.png)
+
+**Lista dostępów: przy aplikacji lub multipodręczniku wybierz „Dodaj do kontroli”**
+
+![Wybór aplikacji i multipodręczników z konta](docs/images/wybor-materialow.png)
+
+**Wybór sposobu sprawdzania materiału**
+
+![Konfiguracja kontroli multipodręcznika](docs/images/kontrola-materialu.png)
+
+</details>
+
 ## Testy ręczne
 
 W panelu wybierz **TEST/PROD → Uruchom testy**, a następnie zestaw i nauczyciela. Z terminalu:
@@ -52,6 +76,15 @@ Bez parametru środowiska wybierany jest TEST. Przed testami przeglądarkowymi s
 ## Harmonogram
 
 W panelu **PROD → Harmonogram** wybierz odstęp, zestawy i nauczyciela, włącz automatyczne wykonywanie i zapisz. Komputer i panel muszą działać; samą kartę przeglądarki można zamknąć. Zestawy wykonują się kolejno, a zajęty termin jest pomijany. Harmonogram można wyłączyć w tym samym widoku. Testy obciążeniowe nie są uruchamiane z harmonogramu.
+
+Dziennik oznacza zaliczone testy na zielono, a niezaliczone i błędy na czerwono. Można filtrować wyniki oraz użyć **Wyczyść dziennik** — raporty, historia testów i ustawienia pozostają zachowane.
+
+<details>
+<summary>Przykładowy dziennik harmonogramu</summary>
+
+![Kolorowe wyniki, filtry i czyszczenie dziennika](docs/images/dziennik-harmonogramu.png)
+
+</details>
 
 Historia i raporty są dostępne w panelu, osobno dla TEST i PROD.
 

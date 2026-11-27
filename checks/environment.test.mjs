@@ -85,3 +85,19 @@ test('jeden panel udostępnia oba środowiska i odrzuca mieszanie tokenów',asyn
     assert.notEqual(tokens.test,tokens.prod);
   } finally {await new Promise(resolve=>server.close(resolve));}
 });
+
+test('starsze adresy raportów prowadzą do właściwego środowiska',async()=>{
+ const directory=fs.mkdtempSync(path.join(os.tmpdir(),'gwo-report-routing-'));
+ let server;
+ try{
+  const ids={test:'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',prod:'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'};
+  for(const [environment,id] of Object.entries(ids))fs.mkdirSync(path.join(directory,environment,'runs',id,'report'),{recursive:true});
+  server=await createApplication({reportDirectory:directory});await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
+  const origin='http://127.0.0.1:'+server.address().port;
+  for(const [environment,id] of Object.entries(ids)){
+   const response=await fetch(origin+'/report/'+id+'/?view=summary',{redirect:'manual'});
+   assert.equal(response.status,302);assert.equal(response.headers.get('location'),'/'+environment+'/report/'+id+'/?view=summary');
+  }
+  assert.equal((await fetch(origin+'/report/cccccccc-cccc-cccc-cccc-cccccccccccc/')).status,404);
+ }finally{if(server?.listening)await new Promise(resolve=>server.close(resolve));fs.rmSync(directory,{recursive:true,force:true});}
+});
