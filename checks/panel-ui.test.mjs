@@ -89,6 +89,14 @@ test('dziennik wyróżnia wyniki, filtruje błędy i czyści tylko wpisy',async(
   await expect(page.locator('.schedule-event--pass a')).toHaveAttribute('href','/prod/report/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa/');
   await page.locator('#schedule-disable').click();await expect(page.locator('#schedule-status')).toHaveText('Harmonogram wyłączony');
   await page.locator('#schedule-event-filter').selectOption('failures');await expect(page.locator('.schedule-event')).toHaveCount(1);
+  const passedTile=page.locator('[data-event-filter="passes"]'),failedTile=page.locator('[data-event-filter="failures"]'),allTile=page.locator('[data-event-filter="all"]');
+  await expect(failedTile).toHaveAttribute('aria-pressed','true');
+  await passedTile.click();await expect(page.locator('.schedule-event')).toHaveCount(1);await expect(page.locator('.schedule-event--pass')).toHaveCount(1);
+  await expect(page.locator('#schedule-event-filter')).toHaveValue('passes');await expect(passedTile).toHaveAttribute('aria-pressed','true');
+  await page.evaluate(()=>window.refreshMojeGwo());await expect(passedTile).toHaveAttribute('aria-pressed','true');await expect(page.locator('.schedule-event--pass')).toHaveCount(1);
+  await failedTile.focus();await page.keyboard.press('Enter');await expect(page.locator('.schedule-event--fail')).toHaveCount(1);await expect(passedTile).toHaveAttribute('aria-pressed','false');
+  await allTile.click();await expect(page.locator('.schedule-event')).toHaveCount(3);await expect(allTile).toHaveAttribute('aria-pressed','true');
+  await page.locator('#schedule-event-filter').selectOption('results');await expect(page.locator('.schedule-event')).toHaveCount(2);await expect(allTile).toHaveAttribute('aria-pressed','false');
   await page.locator('#schedule-form input[name="intervalMinutes"]').fill('45');
   await page.locator('#schedule-clear-events').click();await expect(page.locator('.schedule-event')).toHaveCount(0);
   await expect(page.locator('#schedule-events-message')).toContainText('Raporty i ustawienia zostały zachowane');

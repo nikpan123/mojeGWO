@@ -27,11 +27,16 @@
  function renderEvents(){
   if(!saved)return;
   const events=saved.events||[],filter=$('#schedule-event-filter').value;
-  const visible=events.filter(event=>filter==='all'||(filter==='results'?['PASS','FAIL'].includes(event.type):outcome(event)==='fail'));
-  const summary=$('#schedule-event-summary');summary.replaceChildren();
-  for(const [label,count,type] of [['Zaliczone',events.filter(e=>e.type==='PASS').length,'pass'],['Niezaliczone i błędy',events.filter(e=>outcome(e)==='fail').length,'fail'],['Wszystkie wpisy',events.length,'neutral']]){
-   const item=document.createElement('div');item.className='schedule-total schedule-total--'+type;
-   const number=document.createElement('strong');number.textContent=count;const caption=document.createElement('span');caption.textContent=label;item.append(number,caption);summary.append(item);
+  const visible=events.filter(event=>filter==='all'||(filter==='results'?['PASS','FAIL'].includes(event.type):filter==='passes'?event.type==='PASS':outcome(event)==='fail'));
+  const summary=$('#schedule-event-summary');
+  for(const [label,count,type,value] of [['Zaliczone',events.filter(e=>e.type==='PASS').length,'pass','passes'],['Niezaliczone i błędy',events.filter(e=>outcome(e)==='fail').length,'fail','failures'],['Wszystkie wpisy',events.length,'neutral','all']]){
+   let item=summary.querySelector('[data-event-filter="'+value+'"]');
+   if(!item){
+    item=document.createElement('button');item.type='button';item.className='schedule-total schedule-total--'+type;item.dataset.eventFilter=value;
+    item.setAttribute('aria-controls','schedule-events');
+    const number=document.createElement('strong'),caption=document.createElement('span');caption.textContent=label;item.append(number,caption);summary.append(item);
+   }
+   item.querySelector('strong').textContent=count;item.setAttribute('aria-pressed',String(filter===value));
   }
   $('#schedule-clear-events').disabled=pending||events.length===0;
   const rows=visible.map(event=>{
@@ -57,6 +62,10 @@
   $('#schedule-events').replaceChildren(...rows);
  }
  $('#schedule-event-filter').onchange=renderEvents;
+ $('#schedule-event-summary').onclick=event=>{
+  const button=event.target.closest('button[data-event-filter]');if(!button)return;
+  $('#schedule-event-filter').value=button.dataset.eventFilter;renderEvents();
+ };
  $('#schedule-clear-events').onclick=async()=>{
   pending=true;renderEvents();
   try{
