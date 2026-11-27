@@ -100,6 +100,8 @@ Zestaw działa w przeglądarce Playwright dla wybranego nauczyciela i jego włą
 3. Zapamiętuje oznaczenie aktualnych stron i źródła ich obrazów, po czym klika **następną stronę**.
 4. Wymaga zmiany oznaczenia stron **i** źródeł obrazów oraz poprawnego załadowania nowych obrazów. W raporcie zapisuje numery przed i po przejściu oraz informację o załadowanej treści. Sprawdza jedno przejście, nie wszystkie strony podręcznika.
 
+Czytnik zapisuje dwa zrzuty do raportu i ręcznej galerii: **1. Po otwarciu multipodręcznika** oraz **2. Po zmianie rozkładówki**. Drugi powstaje dopiero po potwierdzeniu zmiany stron i załadowaniu ich obrazów.
+
 **Po otwarciu Kompozytora — wariant „Kompozytor — dostęp i lista zestawów”:**
 
 1. Odnajduje bibliotekę lub klasę wskazaną w konfiguracji materiału. Przy kilku dostępach do tego samego katalogu wybiera jednoznaczny aktywny dostęp z najpóźniejszym terminem ważności; niejednoznaczność kończy się błędem.

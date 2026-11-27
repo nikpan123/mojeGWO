@@ -283,7 +283,7 @@ Wybierz **Czytnik — dostęp i zmiana stron**. Sprawdź pełną nazwę, rodzaj 
 
 ![Konfiguracja multipodręcznika](images/kontrola-materialu.png)
 
-Test potwierdza załadowanie obrazów, klika przejście dalej i wymaga zmiany oznaczenia stron oraz źródeł obrazów. Nie przegląda całego podręcznika.
+Test potwierdza załadowanie obrazów, klika przejście dalej i wymaga zmiany oznaczenia stron oraz źródeł obrazów. Zapisuje dwa zrzuty do raportu i ręcznej galerii: **1. Po otwarciu multipodręcznika** oraz **2. Po zmianie rozkładówki**. Drugi obraz powstaje po potwierdzeniu zmiany stron i załadowaniu nowych obrazów. Nie przegląda całego podręcznika. Starsze przebiegi zachowują wcześniejszą liczbę zrzutów.
 
 ### Kompozytor
 

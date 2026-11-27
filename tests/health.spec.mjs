@@ -112,7 +112,8 @@ for (const resource of settings.resources) {
       await expect(app.getByText('Brak autoryzacji',{exact:true}).first(),'Sesja aplikacji utraciła autoryzację.').toBeHidden();
       if(resource.adapter==='composer'&&resource.libraryLabel){const resolved=await resolveComposerLibrary(app,resource.libraryLabel);selectedLibrary=resolved.library;await expect(selectedLibrary).toBeVisible();await test.info().attach('wybor-dostepu-do-biblioteki',{body:JSON.stringify(resolved.selection),contentType:'application/json'});}
       else if(resource.readySelector) await expect(resource.functionalMode==='reader-next'?app.locator(resource.readySelector).first():app.locator(resource.readySelector)).toBeVisible();
-      await test.info().attach(composerScreenshots?'kompozytor-01-otwarcie':'ekran-aplikacji', { body:await app.screenshot({fullPage:true,animations:'disabled'}), contentType:'image/png' });
+      const openingScreenshot=composerScreenshots?'kompozytor-01-otwarcie':resource.functionalMode==='reader-next'?'czytnik-01-otwarcie':'ekran-aplikacji';
+      await test.info().attach(openingScreenshot, { body:await app.screenshot({fullPage:true,animations:'disabled'}), contentType:'image/png' });
     });
     await test.step('Brak blokady dostępu, autoryzacji lub pierwszej akceptacji regulaminu', async () => {
       await expect((selectedLibrary||app).getByText('Dostęp zakończony', {exact:true}).first(),'Ważność wybranego dostępu; inne klasy nie należą do tego scenariusza.').toBeHidden();
@@ -141,6 +142,7 @@ for (const resource of settings.resources) {
         await expect.poll(signature).not.toBe(beforeImage);
         await expect.poll(loaded).toBe(true);
         await test.info().attach('zmiana-strony',{body:JSON.stringify({before,after:await pageNumber.innerText(),imagesLoaded:true,visiblePages:await images.count()}),contentType:'application/json'});
+        await test.info().attach('czytnik-02-zmiana-strony',{body:await app.screenshot({fullPage:true,animations:'disabled'}),contentType:'image/png'});
         return;
       }
       if(resource.functionalMode==='worksheet-catalog'){
