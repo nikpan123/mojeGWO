@@ -2,6 +2,23 @@ const $=s=>document.querySelector(s);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const names={PASS:'Zaliczony',FAIL:'Niezaliczony',RUNNING:'W trakcie',passed:'Zaliczony',failed:'Błąd',skipped:'Pominięty',timedOut:'Przekroczony czas'};
 let selected='',state=null,loading=false,previewKey='',refreshing=false;
+const clockTime=new Intl.DateTimeFormat('pl-PL',{timeZone:'Europe/Warsaw',hour:'2-digit',minute:'2-digit',second:'2-digit'});
+const clockDate=new Intl.DateTimeFormat('pl-PL',{timeZone:'Europe/Warsaw',day:'numeric',month:'long',year:'numeric'});
+const nextTestTime=new Intl.DateTimeFormat('pl-PL',{timeZone:'Europe/Warsaw',day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit'});
+function setText(element,text){if(element.textContent!==text)element.textContent=text;}
+function tickClock(){if(!$('#panel-clock-time'))return;const now=new Date();$('#panel-clock-time').dateTime=now.toISOString();setText($('#panel-clock-time'),clockTime.format(now));setText($('#panel-clock-date'),clockDate.format(now));}
+tickClock();setInterval(tickClock,1000);
+function renderHeaderStatus(){
+ const status=$('#panel-test-status'),run=state.history.find(run=>run.status==='RUNNING'),schedule=state.schedule;
+ if(!status)return;
+ const running=state.running||schedule?.running;
+ status.classList.toggle('is-running',!!running);
+ if(running){setText(status,'Testy w toku'+(run?' · '+({functional:'Konto i materiały',websites:'Dostępność stron',services:'Healthcheck usług',load:'Obciążenie TEST'}[run.suite]||'Trwa przebieg'): ' · Przygotowanie przebiegu'));status.href='#live';}
+ else if(state.busy){setText(status,'Trwa odczyt lub zapis konfiguracji');status.href='#teachers';}
+ else if(schedule?.enabled){const next=new Date(schedule.nextRunAt);setText(status,schedule.nextRunAt&&Number.isFinite(next.getTime())?'Kolejny test: '+nextTestTime.format(next):'Harmonogram włączony · Oczekiwanie na termin');status.href='#schedule';}
+ else{setText(status,document.body.dataset.environment==='prod'?'Harmonogram wyłączony':'Testy uruchamiane ręcznie');status.href='#run';}
+}
+$('#panel-test-status')?.addEventListener('click',()=>{const run=state?.history.find(run=>run.status==='RUNNING');if(run){selected=run.id;previewKey='';void live();}});
 function navigate(){const view=location.hash.slice(1)||'overview';document.querySelectorAll('[data-view]').forEach(el=>el.hidden=el.dataset.view!==view);document.querySelectorAll('nav a').forEach(a=>a.classList.toggle('active',a.hash==='#'+view));}
 if(document.body.dataset.environment==='test'){for(const id of ['schedule','notifications']){document.querySelector('a[href="#'+id+'"]')?.remove();document.querySelector('[data-view="'+id+'"]')?.remove();}}
 window.addEventListener('hashchange',navigate);navigate();
@@ -27,6 +44,7 @@ async function refresh(){
  try{
   const r=await fetch('/api/state');if(!r.ok)throw new Error('Nie udało się odczytać stanu panelu.');state=await r.json();const serviceSuite=$('#suite-choice').value==='services';const websiteSuite=$('#suite-choice').value==='websites',anonymousSuite=serviceSuite||websiteSuite;const suiteState=websiteSuite?state.websiteAvailability:serviceSuite?state.serviceHealth:state;$('#run').disabled=!suiteState.ready||state.running||state.busy;$('#suite-readiness').textContent=suiteState.message;$('#teacher-choice-label').hidden=anonymousSuite;for(const id of ['#preview-enabled','#headed','#speed','#force-login'])document.querySelector(id).closest('label').hidden=anonymousSuite;$('#status').textContent=state.running?'Testy trwają':suiteState.ready?'Gotowe':'Do konfiguracji';$('#readiness').textContent=suiteState.message;
   window.renderLoadTesting?.(state);
+  renderHeaderStatus();
   window.renderTeachers?.(state);
   window.renderServiceHealth?.(state);
   if(document.body.dataset.environment==='prod')window.renderSchedule?.(state);
@@ -40,7 +58,7 @@ async function refresh(){
   choice.value=selected;
   $('#history').innerHTML=state.history.map(r=>`<tr><td>${esc(new Date(r.startedAt).toLocaleString('pl-PL'))}</td><td>${esc(r.profileLabel||r.accountEmail||'Dotychczasowy profil')}</td><td class="${r.status==='PASS'?'pass':r.status==='FAIL'?'fail':''}">${esc(names[r.status]||r.status)}</td><td>${r.counts?`${r.counts.passed} / ${r.expectedCount||5}`:'—'}</td><td><button data-live="${esc(r.id)}">Przebieg i logi</button>${/^\/report\/[a-f0-9-]{36}\/$/.test(r.report||'')?`<a href="${window.mojeGwoURL(r.report)}" target="_blank" rel="noopener">Raport ↗</a>`:''}</td></tr>`).join('')||'<tr><td colspan="5">Nie wykonano jeszcze testów.</td></tr>';
   await live();
- }catch(e){$('#message').textContent=e.message;}finally{refreshing=false;}
+ }catch(e){$('#message').textContent=e.message;const status=$('#panel-test-status');if(status){setText(status,'Nie udało się odświeżyć stanu testów');status.classList.remove('is-running');}}finally{refreshing=false;}
 }
 $('#run').addEventListener('click',async()=>{
  $('#run').disabled=true;

@@ -26,6 +26,9 @@ test('panel przełącza TEST i PROD, zachowuje funkcje i działa na telefonie',a
   await expect(page.locator('html')).toHaveAttribute('data-theme','dark');
   await page.locator('[data-theme-value="light"]').click();await expect(page.locator('html')).toHaveAttribute('data-theme','light');
   await expect(page.locator('#teacher-choice option')).toHaveCount(1);
+  await expect(page.locator('#panel-test-status')).toHaveText('Testy uruchamiane ręcznie');
+  await expect(page.locator('#panel-clock-time')).toHaveText(/^\d{2}:\d{2}:\d{2}$/);
+  const initialClock=await page.locator('#panel-clock-time').textContent();await expect.poll(()=>page.locator('#panel-clock-time').textContent()).not.toBe(initialClock);
   await page.locator('nav a[href="#load"]').click();await expect(page.locator('#load-form')).toBeVisible();
   await expect(page.locator('#load-run')).toBeDisabled();
   await page.locator('#environment-choice a').filter({hasText:'PROD'}).click();await page.waitForURL('**/prod/');
@@ -78,7 +81,7 @@ test('dziennik wyróżnia wyniki, filtruje błędy i czyści tylko wpisy',async(
   const state=await(await fetch(origin+'/prod/api/state')).json();
   state.schedule.events=[{at:'2026-11-27T06:30:00Z',type:'PASS',suite:'functional',message:'Zakończono zestaw.',report:'/report/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa/',counts:{passed:5,failed:0}},{at:'2026-11-27T06:29:00Z',type:'FAIL',suite:'websites',message:'Zakończono zestaw.',counts:{passed:2,failed:1}},{at:'2026-11-27T06:28:00Z',type:'START',message:'Rozpoczęto cykl.'}];
   state.schedule.events[0].profileLabel='Nauczyciel przykładowy';state.schedule.events[0].materials=[{id:'demo',title:'Matematyka. Klasa 5',kind:'multipodrecznik',checkMode:'functional'}];
-  state.schedule.enabled=true;state.schedule.events[2].message='Przykładowe długie zdarzenie. '.repeat(250);
+  state.schedule.enabled=true;state.schedule.nextRunAt='2026-11-27T09:30:00Z';state.schedule.events[2].message='Przykładowe długie zdarzenie. '.repeat(250);
   state.profiles.teachers[0].resources=[{id:'a',title:'Matematyka. Klasa 5',kind:'multipodrecznik'},{id:'b',title:'Geografia. Klasa 6',kind:'multipodrecznik'}];
   state.profiles.teachers[0].catalog=[{id:'1',title:'Matematyka. Klasa 5',kind:'multipodrecznik',teacher:true},{id:'2',title:'W świecie geografii',kind:'multipodrecznik',teacher:true},{id:'3',title:'Kompozytor',kind:'aplikacja',teacher:true}];
   const installed=await fs.access(chromium.executablePath()).then(()=>true,()=>false);
@@ -87,6 +90,12 @@ test('dziennik wyróżnia wyniki, filtruje błędy i czyści tylko wpisy',async(
   await page.route('**/prod/api/schedule',route=>{const body=route.request().postDataJSON();assert.equal(body.enabled,false);assert.ok(!Object.hasOwn(body,'events'));assert.ok(route.request().postData().length<1024);state.schedule.enabled=false;state.schedule.revision++;return route.fulfill({json:{schedule:state.schedule}});});
   await page.route('**/prod/api/schedule/events/clear',route=>{assert.equal(route.request().method(),'POST');clears++;state.schedule.events=[];return route.fulfill({json:{schedule:state.schedule}});});
   await page.goto(origin+'/prod/#schedule');
+  await expect(page.locator('#panel-test-status')).toHaveText('Kolejny test: 27.11.2026, 10:30:00');
+  state.running=true;state.history=[{id:'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',status:'RUNNING',suite:'functional',startedAt:'2026-11-27T09:29:00Z',expectedCount:5}];
+  await page.evaluate(()=>window.refreshMojeGwo());await expect(page.locator('#panel-test-status')).toHaveText('Testy w toku · Konto i materiały');
+  await expect(page.locator('#panel-test-status')).toHaveAttribute('href','#live');
+  state.running=false;state.history=[];await page.evaluate(()=>window.refreshMojeGwo());
+  await expect(page.locator('#panel-test-status')).toContainText('Kolejny test:');
   await expect(page.locator('#schedule-form legend').first()).toHaveText('1. Wybierz testy do uruchamiania');
   await expect(page.locator('#schedule-saved-scope')).toContainText('Zapisany zakres:');
   await page.locator('#schedule-form input[name="functional"]').uncheck();await expect(page.locator('#schedule-teacher-step')).toBeHidden();
@@ -103,6 +112,9 @@ test('dziennik wyróżnia wyniki, filtruje błędy i czyści tylko wpisy',async(
   assert.equal(await page.locator('.schedule-event--fail').evaluate(el=>getComputedStyle(el).backgroundColor),'rgb(255, 243, 243)');
   await expect(page.locator('.schedule-event--pass a')).toHaveAttribute('href','/prod/report/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa/');
   await page.locator('#schedule-disable').click();await expect(page.locator('#schedule-status')).toHaveText('Harmonogram wyłączony');
+  await expect(page.locator('#panel-test-status')).toHaveText('Harmonogram wyłączony');
+  state.running=true;await page.evaluate(()=>window.refreshMojeGwo());await expect(page.locator('#panel-test-status')).toContainText('Testy w toku');
+  state.running=false;await page.evaluate(()=>window.refreshMojeGwo());
   await page.locator('#schedule-event-filter').selectOption('failures');await expect(page.locator('.schedule-event')).toHaveCount(1);
   const passedTile=page.locator('[data-event-filter="passes"]'),failedTile=page.locator('[data-event-filter="failures"]'),allTile=page.locator('[data-event-filter="all"]');
   await page.locator('[data-theme-value="dark"]').click();
