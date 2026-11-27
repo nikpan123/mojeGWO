@@ -21,8 +21,8 @@
     "test:services:list": "node scripts/run.mjs test:services --list",
     "test:pages": "node scripts/run.mjs test:pages",
     "test:pages:list": "node scripts/run.mjs test:pages --list",
-    "check:auth": "node checks/auth.test.mjs",
-    "check:ui": "node --test checks/panel-ui.test.mjs"
+    "check:auth": "node scripts/check-local.mjs --only auth",
+    "check:ui": "node scripts/check-local.mjs --only ui"
   },
   "devDependencies": {
     "@playwright/test": "^1.58.0"

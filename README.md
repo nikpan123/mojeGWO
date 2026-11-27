@@ -1,96 +1,56 @@
-# Moje GWO — TEST i PROD
+# Moje GWO — testy TEST i PROD
 
-Jeden projekt, jedna instalacja i wspólny panel. Środowisko wybierasz w polu **Środowisko** albo parametrem `--env test` / `--env prod`. Domyślnie wybierany jest TEST.
+Wspólny panel do sprawdzania kont nauczycieli, materiałów i usług GWO. Środowisko TEST lub PROD wybierasz w panelu albo w poleceniu.
 
-## Instalacja i panel
+## Instalacja
 
-Wymagane: Node.js 22 lub nowszy oraz npm.
+Wymagane: **Git, Node.js 22+ i npm**. Polecenia dla PowerShell:
 
 ```powershell
+git clone https://github.com/nikpan123/mojeGWO.git
+cd mojeGWO
 npm.cmd ci
 npx.cmd playwright install chromium
-npm.cmd run panel
-```
-
-Otwórz adres wyświetlony w PowerShell, domyślnie **http://127.0.0.1:4182**. Jeśli port jest zajęty, panel wybierze 4184, a jeśli ten też jest zajęty — inny wolny port. Nie trzeba zamykać poprzednich paneli. Własny port można podać przez `npm.cmd run panel -- --port 4184`.
-
-Panel umożliwia przełączanie TEST i PROD. Adresy `/test/` i `/prod/` można też otworzyć w osobnych kartach. Zmiana środowiska nie przenosi kont i nie zmienia środowiska trwających testów. Otwarcie panelu nie uruchamia testów; wcześniej zapisany i włączony harmonogram PROD wznawia działanie po otwarciu tego środowiska.
-
-## Konfiguracja
-
-Skopiuj wzorce tylko dla plików, których jeszcze nie masz:
-
-```powershell
 Copy-Item .env.test.example .env.test
 Copy-Item .env.prod.example .env.prod
 Copy-Item config/test.example.json config/test.local.json
 Copy-Item config/prod.example.json config/prod.local.json
 ```
 
-Uzupełnij konto, materiały, adresy i selektory osobno dla każdego środowiska.
-
-| Środowisko | Plik | Nauczyciel | GitLab |
-| --- | --- | --- | --- |
-| TEST | `.env.test` | `MOJE_GWO_TEST_USERNAME`, `MOJE_GWO_TEST_PASSWORD` | `GITLAB_TEST_USERNAME`, `GITLAB_TEST_PASSWORD` |
-| PROD | `.env.prod` | `MOJE_GWO_PROD_USERNAME`, `MOJE_GWO_PROD_PASSWORD` | `GITLAB_PROD_USERNAME`, `GITLAB_PROD_PASSWORD`, jeśli używany |
-
-Zmienne procesu mają pierwszeństwo przed plikiem danego środowiska. Brakujące dane PROD nie są zastępowane danymi TEST. PROD wymaga kompletnej konfiguracji, potwierdzonego `authMode` i świadomego ustawienia `runEnabled: true`. Sam wybór PROD nie włącza testów.
-
-## Polecenia
+Uzupełnij dane kont w `.env.test` i `.env.prod`, a ustawienia środowisk w `config/*.local.json`. PROD wymaga `runEnabled: true` i poprawnego `authMode`. Przy aktualizacji istniejącej instalacji zachowaj własne pliki ustawień.
 
 ```powershell
-npm.cmd run panel                       # wspólny panel, start w TEST
-npm.cmd run panel -- --env prod          # wspólny panel, start w PROD
-npm.cmd run test:list -- --env test      # lista bez logowania i testowania
-npm.cmd run test:list -- --env prod
-npm.cmd test -- --env test               # rzeczywiste testy TEST
-npm.cmd test -- --env prod               # rzeczywiste testy PROD
-npm.cmd run auth:check -- --env test
+npm.cmd run panel
+```
+
+Otwórz adres wyświetlony w terminalu. Panel próbuje portu **4182**, następnie **4184**, a w razie konfliktu wybiera inny wolny port. W panelu dodawaj nauczycieli, pobieraj ich dostępy i wybieraj materiały do testów.
+
+## Technologie i zakres testów
+
+- **Node.js / JavaScript (ES Modules)** — lokalny serwer HTTP, panel i obsługa środowisk.
+- **Playwright / Chromium** — sprawdzanie konta i roli nauczyciela, aktywnych dostępów, otwierania materiałów, zmiany stron czytnika oraz skonfigurowanych funkcji aplikacji. Dostępne są logi, podgląd i raporty.
+- **Healthchecki usług** — HTTPS, odpowiedź JSON, czas i nagłówki cache. Adresy wymagają konfiguracji osobno dla TEST i PROD.
+- **PROD** — dodatkowe anonimowe testy dostępności trzech stron.
+- **k6, opcjonalnie** — ręczne testy obciążeniowe wyłącznie na TEST; silnik umieść w `tools/k6.exe`.
+- **Windows DPAPI** — szyfrowanie haseł zapisanych w profilach. Pliki kont, sesji i wyników pozostają lokalne i są wykluczone z Git.
+
+## Testy ręczne
+
+W panelu wybierz **TEST/PROD → Uruchom testy**, a następnie zestaw i nauczyciela. Z terminalu:
+
+```powershell
+npm.cmd test -- --env test
+npm.cmd test -- --env prod
 npm.cmd run test:services -- --env prod
 npm.cmd run test:pages -- --env prod
-npm.cmd run report -- --env test
-npm.cmd run check:local                  # lokalne kontrole obu środowisk
-npm.cmd run check:local -- --env prod
+npm.cmd run test:list -- --env test  # sama lista, bez uruchamiania
+npm.cmd run check:local             # lokalne kontrole kodu i panelu
 ```
 
-Można też ustawić `MOJE_GWO_ENV=test` lub `MOJE_GWO_ENV=prod`. Inne nazwy są odrzucane.
+Bez parametru środowiska wybierany jest TEST. Przed testami przeglądarkowymi sesja jest sprawdzana i w razie potrzeby odnawiana z lokalnych danych konta.
 
-## Funkcje
+## Harmonogram
 
-- **Oba środowiska:** profile nauczycieli, materiały, weryfikacja konta, testy funkcjonalne, logi, podgląd przeglądarki, raporty i healthchecki usług.
-- **TEST:** ręczne testy obciążeniowe k6. Silnik umieść lokalnie w `tools/k6.exe`. Obciążenie na PROD jest blokowane również w API.
-- **PROD:** anonimowa dostępność trzech stron, harmonogram lokalny i powiadomienia Mattermost. Harmonogram wymaga działającego panelu i komputera. Powiadomienia są domyślnie wyłączone; webhook wpisz do `.env.prod` jako `MOJE_GWO_MATTERMOST_WEBHOOK_URL`.
+W panelu **PROD → Harmonogram** wybierz odstęp, zestawy i nauczyciela, włącz automatyczne wykonywanie i zapisz. Komputer i panel muszą działać; samą kartę przeglądarki można zamknąć. Zestawy wykonują się kolejno, a zajęty termin jest pomijany. Harmonogram można wyłączyć w tym samym widoku. Testy obciążeniowe nie są uruchamiane z harmonogramu.
 
-Adresy healthchecków wymagają potwierdzenia i są zapisywane osobno w `config/service-health.test.local.json` i `config/service-health.prod.local.json`. Strona główna nie zastępuje endpointu healthcheck.
-
-## Układ projektu
-
-```text
-config/                  wzorce i konfiguracja środowisk
-checks/                  kontrole lokalne i integracyjne
-dashboard/              wspólny panel i obsługa środowisk
-lib/                     wspólne biblioteki
-scripts/                 wspólne polecenia
-tests/                  wspólne scenariusze Playwright
-load/                    scenariusz obciążenia TEST
-.health/test/            lokalne profile, historia i raporty TEST
-.health/prod/            lokalne profile, historia i raporty PROD
-playwright/.auth/test/   sesje TEST
-playwright/.auth/prod/   sesje PROD
-```
-
-Hasła, sesje, lokalne ustawienia i wyniki są ignorowane przez Git. Nowe hasła profili są szyfrowane dla bieżącego konta Windows. Instalacja z GitHuba wymaga własnej konfiguracji.
-
-## Przeniesienie ze starego układu
-
-Oryginalne foldery poza tym repozytorium pozostają bez zmian. Przenosząc konfigurację TEST, zmień nazwy zmiennych na `*_TEST_*` i `sessionFile` na `playwright/.auth/test/teacher.json`. Konfigurację PROD przenieś do `config/prod.local.json`, a jego `.env` do `.env.prod`. Nie kopiuj sesji między środowiskami. Najprościej ponownie dodać nauczycieli i zalogować ich ze wspólnego panelu. Dawne integracje wskazujące osobne porty należy skierować na `/test/` lub `/prod/` nowego panelu. Kopia w tym repozytorium nie synchronizuje się automatycznie z pierwotnymi folderami.
-
-## GitHub
-
-Repozytorium: [nikpan123/mojeGWO](https://github.com/nikpan123/mojeGWO).
-
-```powershell
-git add .
-git commit -m "Opis zmian"
-git push
-```
+Historia i raporty są dostępne w panelu, osobno dla TEST i PROD. Opcjonalne powiadomienia Mattermost konfiguruje się w panelu PROD; webhook zapisuje się wyłącznie w `.env.prod` jako `MOJE_GWO_MATTERMOST_WEBHOOK_URL`.
