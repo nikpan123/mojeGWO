@@ -54,7 +54,12 @@ $('#panel-stop-test')?.addEventListener('click',async()=>{
  }catch(error){$('#message').textContent=error.message;location.hash='run';}
  finally{stopPending=false;await refresh();}
 });
-function navigate(){const view=location.hash.slice(1)||'overview';document.querySelectorAll('[data-view]').forEach(el=>el.hidden=el.dataset.view!==view);document.querySelectorAll('nav a').forEach(a=>a.classList.toggle('active',a.hash==='#'+view));}
+function navigate(){
+ const [path,query='']=location.hash.slice(1).split('?'),view=path||'overview';
+ document.querySelectorAll('[data-view]').forEach(el=>el.hidden=el.dataset.view!==view);document.querySelectorAll('nav a').forEach(a=>a.classList.toggle('active',a.hash==='#'+view));
+ const runId=new URLSearchParams(query).get('run');
+ if(view==='live'&&/^[a-f0-9-]{36}$/.test(runId||'')){selected=runId;previewKey='';if(state)void refresh();}
+}
 if(document.body.dataset.environment==='test'){for(const id of ['schedule','notifications']){document.querySelector('a[href="#'+id+'"]')?.remove();document.querySelector('[data-view="'+id+'"]')?.remove();}}
 window.addEventListener('hashchange',navigate);navigate();
 $('#suite-choice').addEventListener('change',()=>void refresh());

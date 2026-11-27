@@ -55,7 +55,11 @@
     }else if(event.runId){const note=document.createElement('p');note.className='hint';note.textContent='Brak zapisanej listy materiałów dla tego starszego przebiegu. Sprawdź raport.';li.append(note);}
    }
    if(event.counts){const counts=document.createElement('p');counts.className='schedule-event-counts';counts.textContent='Zaliczone: '+(event.counts.passed||0)+' · Niezaliczone: '+(event.counts.failed||0)+' · Pominięte: '+(event.counts.skipped||0);li.append(counts);}
-   if(/^\/report\/[a-f0-9-]{36}\/$/.test(event.report||'')){const link=document.createElement('a');link.href=window.mojeGwoURL(event.report);link.target='_blank';link.rel='noopener';link.textContent='Otwórz raport ↗';li.append(link);}
+   const report=/^\/report\/([a-f0-9-]{36})\/$/.exec(event.report||''),runId=/^[a-f0-9-]{36}$/.test(event.runId||'')?event.runId:report?.[1];
+   const actions=document.createElement('div');actions.className='schedule-event-actions';
+   if(runId){const link=document.createElement('a');link.href='#live?run='+encodeURIComponent(runId);link.textContent='Przebieg i logi';actions.append(link);}
+   if(report){const link=document.createElement('a');link.href=window.mojeGwoURL(event.report);link.target='_blank';link.rel='noopener';link.textContent='Otwórz raport ↗';actions.append(link);}
+   if(actions.childElementCount)li.append(actions);
    return li;
   });
   if(!rows.length){const empty=document.createElement('li');empty.className='schedule-empty';empty.textContent=events.length?'Brak wpisów pasujących do wybranego filtra.':'Dziennik jest pusty. Nowe zdarzenia pojawią się tutaj podczas działania harmonogramu.';rows.push(empty);}

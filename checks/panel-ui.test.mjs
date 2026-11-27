@@ -157,7 +157,17 @@ test('dziennik wyróżnia wyniki, filtruje błędy i czyści tylko wpisy',async(
   await expect(page.locator('.schedule-event--pass')).toContainText('Nauczyciel przykładowy');
   assert.equal(await page.locator('.schedule-event--pass').evaluate(el=>getComputedStyle(el).backgroundColor),'rgb(240, 250, 243)');
   assert.equal(await page.locator('.schedule-event--fail').evaluate(el=>getComputedStyle(el).backgroundColor),'rgb(255, 243, 243)');
-  await expect(page.locator('.schedule-event--pass a')).toHaveAttribute('href','/prod/report/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa/');
+  await expect(page.locator('.schedule-event--pass a').filter({hasText:'Otwórz raport'})).toHaveAttribute('href','/prod/report/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa/');
+  const linkedRun='aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
+  state.history=[{id:'cccccccc-cccc-cccc-cccc-cccccccccccc',status:'PASS',startedAt:'2026-11-27T07:30:00Z',expectedCount:5},{id:linkedRun,status:'PASS',startedAt:'2026-11-27T06:30:00Z',expectedCount:5}];
+  await page.route('**/prod/api/runs/'+linkedRun+'/events',route=>route.fulfill({json:{events:[],previewUpdatedAt:null}}));
+  await page.route('**/prod/api/runs/'+linkedRun+'/screenshots',route=>route.fulfill({json:{screenshots:[]}}));
+  await page.evaluate(()=>window.refreshMojeGwo());
+  await page.locator('.schedule-event--pass a').filter({hasText:'Przebieg i logi'}).click();
+  await expect(page.locator('[data-view="live"]')).toBeVisible();await expect(page.locator('#run-choice')).toHaveValue(linkedRun);
+  await expect(page).toHaveURL(new RegExp('#live\\?run='+linkedRun+'$'));
+  await page.reload();await expect(page.locator('[data-view="live"]')).toBeVisible();await expect(page.locator('#run-choice')).toHaveValue(linkedRun);
+  await page.locator('nav a[href="#schedule"]').click();
   await page.locator('#schedule-disable').click();await expect(page.locator('#schedule-status')).toHaveText('Harmonogram wyłączony');
   await expect(page.locator('#panel-test-status')).toHaveText('Harmonogram wyłączony');
   state.running=true;await page.evaluate(()=>window.refreshMojeGwo());await expect(page.locator('#panel-test-status')).toContainText('Testy w toku');
