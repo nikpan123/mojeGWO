@@ -84,7 +84,7 @@ Otwórz pliki `.env` w edytorze. Wpisuj wartości między apostrofami, zgodnie z
 | Środowisko | Zmienne nauczyciela | Zmienne GitLaba |
 | --- | --- | --- |
 | TEST | `MOJE_GWO_TEST_USERNAME`, `MOJE_GWO_TEST_PASSWORD` | `GITLAB_TEST_USERNAME`, `GITLAB_TEST_PASSWORD` |
-| PROD | `MOJE_GWO_PROD_USERNAME`, `MOJE_GWO_PROD_PASSWORD` | `GITLAB_PROD_USERNAME`, `GITLAB_PROD_PASSWORD`, gdy skonfigurowano ten sposób logowania. |
+| PROD | `MOJE_GWO_PROD_USERNAME`, `MOJE_GWO_PROD_PASSWORD` | Nie dotyczy — GitLab jest używany tylko w TEST. |
 
 **Dwa sposoby przechowywania konta nauczyciela:** dotychczasowy profil może korzystać z `.env`; nowe profile dodane w panelu zapisują własne hasło w lokalnym magazynie Windows DPAPI. Dla nowego profilu TEST można użyć wspólnych danych GitLaba z `.env.test`, ale hasło portalu nauczyciela podaje się w jego profilu. GitLab i portal nauczyciela mogą mieć różne hasła.
 
@@ -163,7 +163,7 @@ Wzorzec PROD ma pustą konfigurację i `runEnabled: false`. W `config/prod.local
 
 Zastąp e-mail własnym. Gdy konfiguracja adresów jest gotowa i chcesz umożliwić pracę na PROD, ustaw **`runEnabled: true`**. To ustawienie jest potrzebne także do zalogowania nauczyciela i pobrania jego dostępów. Samo przełączenie panelu na PROD nie włącza środowiska.
 
-`authMode: "portal"` oznacza logowanie kontem portalu bez GitLaba. `gitlab-and-portal` wybieraj tylko wtedy, gdy środowisko rzeczywiście wymaga obu logowań; wówczas potrzebne są też dane i dozwolony host GitLaba. Lista hostów ogranicza ruch przeglądarki. Dodatkowe hosty aplikacji z tego samego środowiska mogą być dopuszczane przy przypisaniu ich właściwego adresu w profilu materiału.
+Dla PROD używaj `authMode: "portal"` — logowania kontem portalu bez GitLaba. Sposób `gitlab-and-portal` i dane GitLaba dotyczą wyłącznie TEST. Lista hostów ogranicza ruch przeglądarki. Dodatkowe hosty aplikacji z tego samego środowiska mogą być dopuszczane przy przypisaniu ich właściwego adresu w profilu materiału.
 
 **Po zmianie pliku środowiska:** odśwież panel. Zmiany kont i materiałów zapisanych już w profilach wykonuj przez panel — edycja samego pliku bazowego nie zastępuje istniejącego profilu.
 
