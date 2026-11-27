@@ -47,7 +47,7 @@ function renderHeaderStatus(){
  if(running){setText(status,'Testy w toku'+(run?' · '+({functional:'Konto i materiały',websites:'Dostępność ekranów wejścia',services:'Healthcheck usług',load:'Obciążenie TEST'}[run.suite]||'Trwa przebieg'): ' · Przygotowanie przebiegu'));status.href='#live';}
  else if(state.busy){setText(status,'Trwa odczyt lub zapis konfiguracji');status.href='#teachers';}
  else if(schedule?.enabled){const next=new Date(schedule.nextRunAt);setText(status,schedule.nextRunAt&&Number.isFinite(next.getTime())?'Kolejny test: '+nextTestTime.format(next):'Harmonogram włączony · Oczekiwanie na termin');status.href='#schedule';}
- else{setText(status,document.body.dataset.environment==='prod'?'Harmonogram wyłączony':'Testy uruchamiane ręcznie');status.href='#run';}
+ else{const prod=document.body.dataset.environment==='prod';setText(status,prod?'Harmonogram wyłączony':'Testy uruchamiane ręcznie');status.href=prod?'#schedule':'#run';}
 }
 $('#panel-test-status')?.addEventListener('click',()=>{const run=state?.history.find(run=>run.status==='RUNNING');if(run){selected=run.id;previewKey='';void live();}});
 $('#panel-stop-test')?.addEventListener('click',async()=>{

@@ -195,6 +195,8 @@ test('dziennik wyróżnia wyniki, filtruje błędy i czyści tylko wpisy',async(
   await page.locator('nav a[href="#schedule"]').click();
   await page.locator('#schedule-disable').click();await expect(page.locator('#schedule-status')).toHaveText('Harmonogram wyłączony');
   await expect(page.locator('#panel-test-status')).toHaveText('Harmonogram wyłączony');
+  await expect(page.locator('#panel-test-status')).toHaveAttribute('href','#schedule');
+  await page.locator('nav a[href="#run"]').click();await page.locator('#panel-test-status').click();await expect(page.locator('[data-view="schedule"]')).toBeVisible();
   state.running=true;await page.evaluate(()=>window.refreshMojeGwo());await expect(page.locator('#panel-test-status')).toContainText('Testy w toku');
   state.running=false;await page.evaluate(()=>window.refreshMojeGwo());
   await page.locator('#schedule-event-filter').selectOption('failures');await expect(page.locator('.schedule-event')).toHaveCount(1);
