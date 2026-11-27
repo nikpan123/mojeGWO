@@ -70,8 +70,8 @@ async function live(){
  if(!selected||loading)return;loading=true;const runId=selected;
  try{
   const response=await fetch(`/api/runs/${runId}/events`);if(!response.ok)return;const data=await response.json();if(selected!==runId)return;
-  const events=data.events;const current=[...events].reverse().find(e=>e.kind==='test');const step=[...events].reverse().find(e=>e.kind==='step');const results=events.filter(e=>e.kind==='result');const run=state.history.find(r=>r.id===runId);
-  $('#current-test').textContent=current?.displayText||current?.text||'Przygotowanie sesji';$('#current-step').textContent=run?.status==='RUNNING'?(step?.displayText||step?.text||'Sprawdzanie sesji i logowanie…'):(run?.status==='PASS'?'Wszystkie kontrole zaliczone.':run?.message||'Przebieg zakończony. Szczegóły w raporcie.');
+  const events=data.events;const step=[...events].reverse().find(e=>e.kind==='step');const results=events.filter(e=>e.kind==='result');const run=state.history.find(r=>r.id===runId);
+  $('#current-test').textContent=run?.status==='RUNNING'?'Testy w toku':run?'Podsumowanie przebiegu':'Podgląd przebiegu';$('#current-step').textContent=run?.status==='RUNNING'?(step?.displayText||step?.text||'Sprawdzanie sesji i logowanie…'):(run?.status==='PASS'?'Wszystkie kontrole zaliczone.':run?.message||'Przebieg zakończony. Szczegóły w raporcie.');
   $('#progress').textContent=`${results.length} / ${run?.expectedCount||5}`;
   $('#logs').textContent=events.length?events.map(e=>`${new Date(e.at).toLocaleTimeString('pl-PL')}  ${e.displayText||e.text}${e.status?' — '+(names[e.status]||e.status):''}`).join('\n'):'Ten przebieg nie ma zapisanych logów kroków. Logi są dostępne dla nowych uruchomień.';
   $('#logs').scrollTop=$('#logs').scrollHeight;$('#logs-link').hidden=false;$('#logs-link').href=window.mojeGwoURL(`/api/runs/${runId}/events`);
