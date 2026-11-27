@@ -1,0 +1,50 @@
+{
+  "environment": "prod",
+  "runEnabled": false,
+  "workflow": "portal-v1",
+  "authMode": "unconfirmed",
+  "baseURL": "",
+  "accountEmail": "",
+  "accountDisplayName": "",
+  "accountUserId": null,
+  "requiredUserFunction": "",
+  "identityAPI": "",
+  "authenticatedUserSelector": "",
+  "catalogPath": "",
+  "allowedHosts": [],
+  "sessionFile": "playwright/.auth/prod/teacher.json",
+  "resources": [
+    {
+      "id": "podrecznik-prod",
+      "kind": "multipodrecznik",
+      "title": "",
+      "description": "Multipodręcznik produkcyjny do wskazania",
+      "accessAPI": "",
+      "catalogTab": "",
+      "groupLabel": "",
+      "entitlementSelector": "",
+      "launchSelector": "",
+      "entryURL": "",
+      "frameSelector": "",
+      "readySelector": "",
+      "actionSelector": "",
+      "resultSelector": ""
+    },
+    {
+      "id": "aplikacja-prod",
+      "kind": "aplikacja",
+      "title": "",
+      "description": "Aplikacja produkcyjna do wskazania",
+      "accessAPI": "",
+      "catalogTab": "",
+      "groupLabel": "",
+      "entitlementSelector": "",
+      "launchSelector": "",
+      "entryURL": "",
+      "frameSelector": "",
+      "readySelector": "",
+      "actionSelector": "",
+      "resultSelector": ""
+    }
+  ]
+}

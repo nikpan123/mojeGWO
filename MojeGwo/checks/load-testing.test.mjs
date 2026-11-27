@@ -1,0 +1,10 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import {validateLoad,loadDefaults,loadReadiness,saveLoadSettings,loadScenarios} from '../lib/load-testing.mjs';
+const base={environment:'test',baseURL:'https://moje.gwotest.pl'},registry={teachers:[{id:'a',enabled:true,accountEmail:'a@example.com',accountUserId:1},{id:'b',enabled:true,accountEmail:'b@example.com',accountUserId:2}]};
+test('limity użytkowników i czasu oraz blokada PROD działają bez ruchu sieciowego',()=>{for(const c of [{users:0},{users:51},{users:1.5},{durationMinutes:0},{durationMinutes:11}])assert.throws(()=>validateLoad({...loadDefaults(),...c},base,registry));assert.throws(()=>validateLoad(loadDefaults(),{environment:'prod',baseURL:'https://moje.gwo.pl'},registry),/TEST/);assert.throws(()=>validateLoad({...loadDefaults(),profileIds:['other']},base,registry));assert.equal(loadScenarios().length,2);});
+test('API wymaga osobnych kont dla każdego VU, a strona publiczna nie wymaga kont',()=>{assert.equal(loadReadiness(loadDefaults(),base,registry,true).ready,true);const api={...loadDefaults(),scenario:'teacher-panel',users:2,profileIds:['a']};assert.equal(loadReadiness(api,base,registry,true).ready,false);assert.equal(loadReadiness({...api,profileIds:['a','b']},base,registry,true).ready,true);assert.equal(loadReadiness({...api,profileIds:['a','b']},base,{teachers:registry.teachers.map(t=>({...t,accountEmail:'same@example.com'}))},true).ready,false);assert.equal(loadReadiness(loadDefaults(),base,registry,false).ready,false);});
+test('zapis profilu nie uruchamia procesu i odrzuca stare formularze',()=>{const dir=fs.mkdtempSync(path.join(os.tmpdir(),'moje-load-'));try{const saved=saveLoadSettings(dir,{...loadDefaults(),users:12,durationMinutes:3},base,registry);assert.equal(saved.users,12);assert.equal(saved.revision,1);assert.throws(()=>saveLoadSettings(dir,loadDefaults(),base,registry),/zmieniła/);assert.deepEqual(fs.readdirSync(dir),['load-settings.json']);}finally{fs.rmSync(dir,{recursive:true,force:true});}});

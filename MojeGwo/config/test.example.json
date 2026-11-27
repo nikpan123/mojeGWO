@@ -1,0 +1,61 @@
+{
+  "environment": "test",
+  "baseURL": "https://moje.gwotest.pl",
+  "accountEmail": "npanek@gwo.pl",
+  "allowedHosts": [
+    "moje.gwotest.pl",
+    "gitlab.gwo.pl",
+    "auth.gwotest.pl",
+    "zgody.gwotest.pl",
+    "files.gwotest.pl",
+    "fonts.gstatic.com",
+    "kompozytorklasowek.apps.gwotest.pl",
+    "fonts.googleapis.com",
+    "old-ksiegarnia.gwotest.pl",
+    "launcher-multipodreczniki.apps.gwotest.pl",
+    "multipodreczniki.apps.gwotest.pl"
+  ],
+  "sessionFile": "playwright/.auth/teacher.json",
+  "authenticatedUserSelector": ".main-toolbar__desktop .main-toolbar__user-name",
+  "catalogPath": "/accesses",
+  "resources": [
+    {
+      "id": "testowy-developerski-5",
+      "kind": "multipodrecznik",
+      "title": "TESTOWY DEVELOPERSKI",
+      "description": "Multipodręcznik, szkoła podstawowa, klasa 5; treść strony i przejście do następnej.",
+      "entitlementSelector": "mat-card:has(mat-card-title:text-is(\"TESTOWY DEVELOPERSKI\"))",
+      "entryURL": "",
+      "frameSelector": "",
+      "readySelector": "img.page-img.show:visible",
+      "actionSelector": "button.nav-btn.next",
+      "resultSelector": "button.pages",
+      "launchSelector": ".product-card__icon.--circled",
+      "catalogTab": "Multipodręczniki / Multićwiczenia",
+      "accessAPI": "/api/v3/my_accesses/mhb",
+      "groupLabel": "Szkoła podstawowa kl. 5",
+      "functionalMode": "reader-next"
+    },
+    {
+      "id": "matematyka-sp",
+      "kind": "aplikacja",
+      "title": "aplikacja ponadklasowa mat sp",
+      "description": "Matematyka SP: otwarcie klasy 6 i listy zestawów, bez tworzenia, zapisu lub usuwania.",
+      "entitlementSelector": "mat-card:has(mat-card-title:text-is(\"aplikacja ponadklasowa mat sp\"))",
+      "entryURL": "https://kompozytorklasowek.apps.gwotest.pl/matematyka",
+      "frameSelector": "",
+      "readySelector": "button.library-info-btn:has-text(\"Matematyka - Klasa 6 SP\")",
+      "actionSelector": "button.library-info-btn:has-text(\"Matematyka - Klasa 6 SP\")",
+      "resultSelector": "button.navigation-block__tab-trigger-btn:has-text(\"Twoje zestawy\")",
+      "launchSelector": ".product-card__icon.--circled",
+      "catalogTab": "Aplikacje",
+      "accessAPI": "/api/v3/my_accesses/app",
+      "groupLabel": ""
+    }
+  ],
+  "workflow": "portal-v1",
+  "accountDisplayName": "",
+  "accountUserId": null,
+  "requiredUserFunction": "teacher_verified",
+  "identityAPI": "/api/v3/user_info"
+}

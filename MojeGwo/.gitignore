@@ -1,0 +1,10 @@
+node_modules/
+playwright/.auth/
+playwright-report/
+test-results/
+config/test.local.json
+.env*
+!.env.example
+.health/
+
+tools/

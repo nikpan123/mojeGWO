@@ -1,0 +1,10 @@
+<!doctype html>
+<html lang="pl"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="health-token" content="__TOKEN__"><title>moje.gwo PROD — Centrum testów</title>
+<style>body{font:16px/1.6 system-ui;max-width:1050px;margin:32px auto;padding:0 24px;color:#243044;background:#f6f5fa}h1{margin-bottom:0}article,aside{padding:20px;background:white;border:1px solid #d9d4e8;border-radius:12px;margin:18px 0}aside{border-left:5px solid #7553a5}.badge{color:#66408f;font-weight:700}button{font:inherit;padding:12px 20px;border:0;border-radius:8px;background:#66408f;color:white}button:disabled{opacity:.45;cursor:not-allowed}a{color:#66408f}small{color:#596579}table{width:100%}td,th{text-align:left;padding:10px;border-bottom:1px solid #ddd}</style>
+<div class="badge">Osobny zestaw produkcyjny</div><h1>moje.gwo PROD</h1>
+<aside><strong id="status">__STATUS__</strong><p id="readiness">__MESSAGE__</p><p>__INSPECTION__ Samo otwarcie tego panelu nie łączy się z produkcją.</p></aside>
+<button id="run" __DISABLED__>Uruchom 5 testów na PROD</button> <a href="/instruction" target="_blank" rel="noopener">Instrukcja konfiguracji</a><p id="message" role="status" aria-live="polite"></p>
+<article><h2>Zakres zestawu PROD</h2><ol><li>Potwierdzony adres portalu i sposób logowania.</li><li>Dedykowane konto nauczyciela oraz osobne dane w pliku .env.</li><li>Multipodręcznik z klasą i wydaniem oraz aplikację z aktywnym dostępem.</li><li>Po jednej podstawowej czynności odczytu w każdym materiale.</li></ol><p>Testy wykonują się po kolei. Drugie logowanie na to konto może unieważnić ich sesję. Blokada czytnika nie jest zaliczeniem jego działania.</p><small>Folder: __ROOT__<br>Konfiguracja: config/prod.local.json<br>Dane: MOJE_GWO_PROD_USERNAME i MOJE_GWO_PROD_PASSWORD. Dane GitLaba PROD tylko jeśli ten etap logowania zostanie potwierdzony.</small></article>
+<article><h2>Przygotowane scenariusze</h2><ol>__SCENARIOS__</ol></article>
+<article><h2>Historia PROD</h2><div id="history">Nie wykonano jeszcze testów produkcyjnych.</div></article>
+<script src="/panel.js"></script></html>

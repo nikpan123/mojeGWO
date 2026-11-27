@@ -1,0 +1,24 @@
+{
+  "name": "moje-gwo-prod-healthcheck",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "panel": "node dashboard/server.mjs",
+    "check:config": "node scripts/check-config.mjs",
+    "check:local": "node checks/prod-draft.test.mjs",
+    "auth:check": "node scripts/check-auth.mjs",
+    "auth:force": "node scripts/check-auth.mjs --force",
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "test:list": "playwright test --list",
+    "report": "playwright show-report",
+    "test:services": "node scripts/run-service-health.mjs",
+    "test:services:list": "node scripts/run-service-health.mjs --list",
+    "test:pages": "node scripts/run-website-availability.mjs",
+    "test:pages:list": "node scripts/run-website-availability.mjs --list"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.58.0"
+  }
+}
