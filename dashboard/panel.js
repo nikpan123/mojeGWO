@@ -2,6 +2,22 @@ const $=s=>document.querySelector(s);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const names={PASS:'Zaliczony',FAIL:'Niezaliczony',RUNNING:'W trakcie',STOPPED:'Zatrzymany',passed:'Zaliczony',failed:'Błąd',skipped:'Pominięty',timedOut:'Przekroczony czas'};
 let selected='',state=null,loading=false,previewKey='',refreshing=false;
+let galleryKey='',screenshots=[],screenshotIndex=0;
+function showScreenshot(){
+ const image=screenshots[screenshotIndex];if(!image)return;
+ const preview=$('#browser-preview'),runId=selected;
+ preview.closest('.preview').classList.add('is-gallery');preview.hidden=true;$('#preview-note').hidden=false;$('#preview-note').textContent='Wczytywanie zrzutu…';
+ preview.onload=()=>{if(selected===runId){preview.hidden=false;$('#preview-note').hidden=true;}};
+ preview.onerror=()=>{if(selected===runId){preview.hidden=true;$('#preview-note').hidden=false;$('#preview-note').textContent='Nie udało się wczytać tego zrzutu. Wybierz inny obraz lub otwórz raport.';}};
+ preview.alt=image.testTitle+' · '+image.label;preview.src=window.mojeGwoURL(image.url);
+ $('#screenshot-choice').value=String(screenshotIndex);$('#screenshot-count').textContent=(screenshotIndex+1)+' / '+screenshots.length;
+ $('#screenshot-caption').hidden=false;$('#screenshot-caption').textContent=image.testTitle+' · '+image.label+(image.status?' · '+(names[image.status]||image.status):'');
+ $('#screenshot-prev').disabled=screenshotIndex===0;$('#screenshot-next').disabled=screenshotIndex===screenshots.length-1;
+ $('#screenshot-open').href=window.mojeGwoURL(image.url);
+}
+$('#screenshot-prev')?.addEventListener('click',()=>{if(screenshotIndex>0){screenshotIndex--;showScreenshot();}});
+$('#screenshot-next')?.addEventListener('click',()=>{if(screenshotIndex<screenshots.length-1){screenshotIndex++;showScreenshot();}});
+$('#screenshot-choice')?.addEventListener('change',event=>{screenshotIndex=Number(event.target.value);showScreenshot();});
 const normalTitle=document.title;let stopPending=false;
 const clockTime=new Intl.DateTimeFormat('pl-PL',{timeZone:'Europe/Warsaw',hour:'2-digit',minute:'2-digit',second:'2-digit'});
 const clockDate=new Intl.DateTimeFormat('pl-PL',{timeZone:'Europe/Warsaw',day:'numeric',month:'long',year:'numeric'});
@@ -49,10 +65,27 @@ async function live(){
   $('#progress').textContent=`${results.length} / ${run?.expectedCount||5}`;
   $('#logs').textContent=events.length?events.map(e=>`${new Date(e.at).toLocaleTimeString('pl-PL')}  ${e.text}${e.status?' — '+(names[e.status]||e.status):''}`).join('\n'):'Ten przebieg nie ma zapisanych logów kroków. Logi są dostępne dla nowych uruchomień.';
   $('#logs').scrollTop=$('#logs').scrollHeight;$('#logs-link').hidden=false;$('#logs-link').href=window.mojeGwoURL(`/api/runs/${runId}/events`);
+  if($('#screenshot-controls')){
+   if(run&&run.status!=='RUNNING'){
+    const key=runId+':'+run.status;
+    if(galleryKey!==key){
+     $('#screenshot-controls').hidden=true;$('#screenshot-caption').hidden=true;$('#browser-preview').hidden=true;$('#preview-note').hidden=false;$('#preview-note').textContent='Wczytywanie zapisanych zrzutów…';
+     const response=await fetch(`/api/runs/${runId}/screenshots`);if(!response.ok)throw new Error('Nie udało się odczytać zrzutów.');
+     const gallery=await response.json();if(selected!==runId)return;
+     screenshots=gallery.screenshots;screenshotIndex=0;galleryKey=key;
+     const choice=$('#screenshot-choice');choice.replaceChildren(...screenshots.map((image,index)=>{const option=document.createElement('option');option.value=String(index);option.textContent=(index+1)+'. '+image.testTitle+' · '+image.label;return option;}));
+     if(screenshots.length)showScreenshot();
+    }
+    $('#screenshot-controls').hidden=screenshots.length===0;
+    if(screenshots.length)return;
+    $('#browser-preview').hidden=true;$('#preview-note').hidden=false;$('#preview-note').textContent='Ten przebieg nie ma zapisanych zrzutów ekranu. Sprawdź logi lub raport.';return;
+   }
+   galleryKey='';screenshots=[];$('#screenshot-controls').hidden=true;$('#screenshot-caption').hidden=true;$('#browser-preview').closest('.preview').classList.remove('is-gallery');
+  }
   const key=runId+':'+data.previewUpdatedAt;
   if(data.previewUpdatedAt&&key!==previewKey){previewKey=key;const img=$('#browser-preview');img.onload=()=>{img.hidden=false;$('#preview-note').hidden=true;};img.src=window.mojeGwoURL(`/api/runs/${runId}/preview?t=${encodeURIComponent(data.previewUpdatedAt)}`);}
   if(!data.previewUpdatedAt){$('#browser-preview').hidden=true;$('#preview-note').hidden=false;$('#preview-note').textContent=run?.suite==='websites'?'Anonimowe kontrole stron. Zrzuty ekranów znajdują się w raporcie.':run?.suite==='services'?'Kontrole endpointów nie otwierają przeglądarki. Dostępne są logi i raport.':run?.preview===false?'Podgląd był wyłączony dla tego przebiegu.':'Podgląd pojawi się po zalogowaniu i otwarciu strony. Starsze przebiegi nie mają podglądu.';}
- }catch{}finally{loading=false;}
+ }catch{if(selected===runId&&$('#screenshot-controls')){$('#screenshot-controls').hidden=true;$('#screenshot-caption').hidden=true;$('#browser-preview').hidden=true;$('#preview-note').hidden=false;$('#preview-note').textContent='Nie udało się wczytać podglądu lub zrzutów. Panel ponowi próbę.';}}finally{loading=false;}
 }
 async function refresh(){
  if(refreshing)return;refreshing=true;

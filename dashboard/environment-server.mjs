@@ -1,5 +1,6 @@
 import {loadSettings,saveLoadSettings,loadReadiness,validateLoad} from '../lib/load-testing.mjs';
 import {stopTestProcess} from '../lib/stop-test-process.mjs';
+import {runScreenshots,screenshotBytes} from '../lib/run-screenshots.mjs';
 import {existsSync} from 'node:fs';
 import {environment,dataRoot} from '../lib/environment.mjs';
 import {websiteReadiness} from '../lib/website-availability.mjs';
@@ -202,6 +203,14 @@ export async function createDashboard({ dataDir = dataRoot, checkReadiness = rea
       }
       if (req.method !== 'GET') return json(405, { error: 'Niedozwolona metoda.' });
       if (url.pathname === '/api/state') return json(200, { ...(await checkReadiness(profiles.settings())), scenarios: scenarios(profiles.settings(),{healthConfig:loadHealthConfig(serviceConfigRoot,profiles.baseProvider().environment)}), serviceHealth:{config:loadHealthConfig(serviceConfigRoot,profiles.baseProvider().environment),...healthReadiness(loadHealthConfig(serviceConfigRoot,profiles.baseProvider().environment),profiles.baseProvider()),expectedCount:9}, environment, websiteAvailability:websiteReadiness(profiles.baseProvider()), loadTesting:{config:loadSettings(dataDir),engineInstalled:loadEngineExists(),...loadReadiness(loadSettings(dataDir),profiles.baseProvider(),profiles.read(),loadEngineExists()),running:activeRun?.suite==='load'}, expectedCount:scenarioCount(profiles.settings()), profiles:await teachers.state(), schedule:await scheduleState(), notifications:await notifications.state(), history: await history(), running: !!active || launching, activeRunId:activeRun?.id||null, stopping:activeRun?.stopRequested===true, busy:configuring });
+      const gallery=url.pathname.match(/^\/api\/runs\/([a-f0-9-]{36})\/screenshots(?:\/(\d{1,6}))?$/);
+      if(gallery){
+        const run=(await history()).find(run=>run.id===gallery[1]);if(!run)return json(404,{error:'Nie znaleziono przebiegu.'});
+        const runDir=path.join(dataDir,'runs',run.id),images=await runScreenshots(runDir);
+        if(gallery[2]===undefined)return json(200,{screenshots:images.map((image,index)=>({id:index,label:image.label,testTitle:image.testTitle,status:image.status,url:'/api/runs/'+run.id+'/screenshots/'+index}))});
+        const image=images[Number(gallery[2])];if(!image)return json(404,{error:'Nie znaleziono zrzutu.'});
+        const bytes=await screenshotBytes(runDir,image);res.writeHead(200,{'Content-Type':image.contentType,'Cache-Control':'no-store','X-Content-Type-Options':'nosniff'});return res.end(bytes);
+      }
       const asset=url.pathname.match(/^\/api\/runs\/([a-f0-9-]{36})\/(events|preview)$/);
       if(asset){
         if(!(await history()).some(run=>run.id===asset[1]))return json(404,{error:'Nie znaleziono przebiegu.'});

@@ -6,6 +6,30 @@ import path from 'node:path';
 import {root} from '../lib/environment.mjs';
 import {createApplication} from '../dashboard/server.mjs';
 
+test('podgląd przegląda zapisane zrzuty i zachowuje wybór po odświeżeniu',async()=>{
+ const server=await createApplication();await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));let browser;
+ try{
+  const origin='http://127.0.0.1:'+server.address().port,state=await(await fetch(origin+'/prod/api/state')).json();
+  const id='aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',emptyId='bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb';
+  state.history=[{id,status:'PASS',startedAt:'2026-11-27T09:00:00Z',expectedCount:2},{id:emptyId,status:'PASS',startedAt:'2026-11-26T09:00:00Z',expectedCount:1}];
+  const installed=await fs.access(chromium.executablePath()).then(()=>true,()=>false);browser=await chromium.launch({headless:true,...(installed?{}:{channel:'msedge'})});const page=await browser.newPage();
+  await page.route('**/prod/api/state',route=>route.fulfill({json:state}));
+  await page.route('**/prod/api/runs/*/events',route=>route.fulfill({json:{events:[],previewUpdatedAt:null}}));
+  await page.route('**/prod/api/runs/*/screenshots',route=>route.fulfill({json:{screenshots:route.request().url().includes(emptyId)?[]:[0,1].map(index=>({id:index,label:index?'Kolejna strona':'Otwarcie czytnika',testTitle:'Podręcznik przykładowy',status:'passed',url:'/api/runs/'+id+'/screenshots/'+index}))}}));
+  await page.route('**/prod/api/runs/*/screenshots/*',route=>route.fulfill({contentType:'image/png',body:Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jRZkAAAAASUVORK5CYII=','base64')}));
+  await page.goto(origin+'/prod/#live');await expect(page.locator('#screenshot-controls')).toBeVisible();await expect(page.locator('#screenshot-count')).toHaveText('1 / 2');
+  await expect(page.locator('#screenshot-prev')).toBeDisabled();await expect.poll(()=>page.locator('#browser-preview').evaluate(image=>image.naturalWidth)).toBeGreaterThan(0);
+  await page.locator('#screenshot-next').click();await expect(page.locator('#screenshot-count')).toHaveText('2 / 2');await expect(page.locator('#screenshot-next')).toBeDisabled();
+  await expect(page.locator('#screenshot-caption')).toContainText('Kolejna strona');await expect(page.locator('#screenshot-open')).toHaveAttribute('href','/prod/api/runs/'+id+'/screenshots/1');
+  await page.evaluate(()=>window.refreshMojeGwo());await expect(page.locator('#screenshot-choice')).toHaveValue('1');
+  await page.locator('#screenshot-prev').click();await expect(page.locator('#screenshot-count')).toHaveText('1 / 2');
+  await page.locator('#screenshot-choice').selectOption('1');await expect(page.locator('#screenshot-count')).toHaveText('2 / 2');
+  await page.locator('#run-choice').selectOption(emptyId);await expect(page.locator('#screenshot-controls')).toBeHidden();await expect(page.locator('#browser-preview')).toBeHidden();await expect(page.locator('#preview-note')).toContainText('nie ma zapisanych zrzutów');
+  state.history[0].status='RUNNING';state.running=true;state.activeRunId=id;await page.evaluate(()=>window.refreshMojeGwo());await page.locator('#run-choice').selectOption(id);
+  await expect(page.locator('#screenshot-controls')).toBeHidden();await expect(page.locator('#screenshot-caption')).toBeHidden();
+ }finally{await browser?.close();await new Promise(resolve=>server.close(resolve));}
+});
+
 test('panel przełącza TEST i PROD, zachowuje funkcje i działa na telefonie',async()=>{
  const server=await createApplication();await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
  const origin='http://127.0.0.1:'+server.address().port;let browser;
