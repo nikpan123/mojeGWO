@@ -29,6 +29,12 @@ test('panel przełącza TEST i PROD, zachowuje funkcje i działa na telefonie',a
   assert.equal(await page.locator('#suite-choice option[value="websites"]').count(),1);
   await page.locator('nav a[href="#scenarios"]').click();
   await expect(page.locator('.scenario-group')).toHaveCount(4);
+  await expect(page.locator('.scenario-group[data-group="functional"] .scenario-card')).toHaveCount(5);
+  await expect(page.locator('.scenario-group[data-group="functional"]')).toContainText('Multipodręcznik — otwarcie i zmiana stron');
+  for(const selector of ['#environment-choice','#theme-mode']){
+   assert.equal(await page.locator(selector).evaluate(el=>el.getBoundingClientRect().height),34);
+   assert.equal(await page.locator(selector).evaluate(el=>getComputedStyle(el).paddingRight),'34px');
+  }
   await page.locator('#scenario-filter').selectOption('services');await expect(page.locator('.scenario-card')).toHaveCount(9);
   await page.locator('#scenario-search').fill('cache');await expect(page.locator('.scenario-card')).toHaveCount(3);
   await page.locator('.scenario-details summary').first().click();await expect(page.locator('.scenario-details[open]')).toHaveCount(1);

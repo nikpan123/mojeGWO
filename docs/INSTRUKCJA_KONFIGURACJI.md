@@ -180,6 +180,8 @@ Na przygotowanym komputerze skrót **Centrum-testow** uruchamia Centrum oraz wsp
 
 Wybierz **Środowisko: TEST lub PROD**. Konta i materiały skonfiguruj osobno dla każdego środowiska. W prawym górnym rogu możesz wybrać motyw **Jasny / Ciemny / Systemowy**.
 
+![Wybór środowiska i motywu panelu](images/wybor-srodowiska-i-motywu.png)
+
 Przy uruchomieniu z PowerShell pozostaw proces panelu działający. Zakończysz go przez **Ctrl+C**. Nie uruchamiaj równolegle kilku kopii panelu z tym samym aktywnym harmonogramem.
 
 ## 5. Nauczyciel i odczyt jego dostępów
@@ -276,7 +278,7 @@ npm.cmd run check:local
 
 ### Katalog scenariuszy
 
-Widok **Scenariusze** opisuje kontrole, a nie wyniki. Zestawy są pogrupowane; możesz wyszukać nazwę materiału, wybrać zestaw i rozwinąć kroki oraz warunki testu. **Scenariusze ręczne** są instrukcjami do samodzielnego wykonania — nie uruchamiają się z harmonogramu.
+Widok **Scenariusze** opisuje kontrole, a nie wyniki. Zestawy są pogrupowane; możesz wyszukać typ kontroli, wybrać zestaw i rozwinąć kroki oraz warunki testu. Dla konta i materiałów pokazywane są ogólne przykłady, bez powielania opisu dla każdego dostępu. Konkretne tytuły są w profilu nauczyciela i raportach. **Scenariusze ręczne** są instrukcjami do samodzielnego wykonania — nie uruchamiają się z harmonogramu.
 
 ![Scenariusze pogrupowane według zestawów](images/katalog-scenariuszy.png)
 

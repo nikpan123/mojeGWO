@@ -6,7 +6,7 @@ const args=process.argv.slice(2),index=args.indexOf('--env');
 const onlyIndex=args.indexOf('--only'),only=onlyIndex>=0?args[onlyIndex+1]:null;
 if(only&&!['auth','ui'].includes(only))throw new Error('Nieznany zestaw kontroli lokalnych.');
 const environments=only?['test']:index>=0?[parseEnvironment(args[index+1])]:['test','prod'];
-const groups=only?{test:[only==='ui'?'panel-ui':'auth']}:{test:['config','dashboard','load-testing','environment','panel-ui'],prod:['prod-draft','local-schedule','mattermost']};
+const groups=only?{test:[only==='ui'?'panel-ui':'auth']}:{test:['config','dashboard','load-testing','environment','panel-ui','inspect-teacher'],prod:['prod-draft','local-schedule','mattermost']};
 
 // Run on a fresh copy of the code and examples. Local accounts, sessions,
 // enabled PROD settings and schedules must never enter installation checks.
