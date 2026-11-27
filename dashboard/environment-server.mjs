@@ -199,6 +199,7 @@ export async function createDashboard({ dataDir = dataRoot, checkReadiness = rea
       if(url.pathname==='/panel.css'){
         res.writeHead(200,{'Content-Type':'text/css; charset=utf-8','Cache-Control':'no-store'});return res.end(await fs.readFile(new URL('./panel.css',import.meta.url)));
       }
+      if(url.pathname==='/scenarios.js'){res.writeHead(200,{'Content-Type':'text/javascript; charset=utf-8','Cache-Control':'no-store'});return res.end(await fs.readFile(new URL('./scenarios.js',import.meta.url)));}
       if(url.pathname==='/theme.js'){res.writeHead(200,{'Content-Type':'text/javascript; charset=utf-8','Cache-Control':'no-store'});return res.end(await fs.readFile(new URL('./theme.js',import.meta.url)));}
       if(url.pathname==='/environment-client.js'){res.writeHead(200,{'Content-Type':'text/javascript; charset=utf-8','Cache-Control':'no-store'});return res.end(await fs.readFile(new URL('./environment-client.js',import.meta.url)));}
       if(url.pathname==='/load-testing.js'){res.writeHead(200,{'Content-Type':'text/javascript; charset=utf-8','Cache-Control':'no-store'});return res.end(await fs.readFile(new URL('./load-testing.js',import.meta.url)));}

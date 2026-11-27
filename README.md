@@ -2,6 +2,8 @@
 
 Wspólny panel do sprawdzania kont nauczycieli, materiałów i usług GWO. Środowisko TEST lub PROD wybierasz w panelu albo w poleceniu.
 
+**Instrukcja krok po kroku ze zrzutami:** [Konfiguracja i uruchamianie testów](docs/INSTRUKCJA_KONFIGURACJI.md).
+
 ## Instalacja
 
 Wymagane: **Git, Node.js 22+ i npm**. Polecenia dla PowerShell:
@@ -44,6 +46,8 @@ W prawym górnym rogu wybierz **Motyw: Jasny / Ciemny / Systemowy**. Panel zapam
 4. Użyj **Wybierz do testów** przy profilu albo listy **Nauczyciel** w widoku uruchamiania. Testy obejmą jego przypisane, włączone materiały. W harmonogramie nauczyciela wybiera się osobno.
 
 Pole **Wzorzec aplikacji** pojawia się tylko po wybraniu **Pełny test według istniejącego wzorca**. Pozostałe sposoby sprawdzania nie wymagają jego wyboru.
+
+Nad listami materiałów są wyszukiwarki po nazwie. Wyniki zawężają się podczas pisania, osobno dla materiałów do sprawdzania i dostępów odczytanych z konta.
 
 <details>
 <summary>Zrzuty ekranu — przykładowe dane nauczyciela</summary>

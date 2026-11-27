@@ -21,7 +21,7 @@
  const options=()=>({enabled:form.elements.enabled.checked,intervalMinutes:Number(form.elements.intervalMinutes.value),suites:['functional','websites'].filter(s=>form.elements[s].checked),profileId:form.elements.profileId.value,revision:saved.revision});
  async function send(path,input){pending=true;try{const response=await fetch(path,{method:'POST',headers:{'Content-Type':'application/json','X-Health-Token':$('meta[name=health-token]').content},body:JSON.stringify(input)});const data=await response.json();if(!response.ok)throw new Error(data.error);saved=data.schedule;dirty=false;revision=-1;$('#schedule-message').textContent=path.endsWith('/run')?'Uruchomiono zapisane testy.':saved.enabled?'Zapisano wybór testów i włączono harmonogram.':'Zapisano ustawienia. Automatyczne uruchamianie jest wyłączone.';await window.refreshMojeGwo?.();}catch(e){$('#schedule-message').textContent=e.message;}finally{pending=false;}}
  form.onsubmit=e=>{e.preventDefault();void send('/api/schedule',options());};
- $('#schedule-disable').onclick=()=>saved&&send('/api/schedule',{...saved,enabled:false});
+ $('#schedule-disable').onclick=()=>saved&&send('/api/schedule',{enabled:false,intervalMinutes:saved.intervalMinutes,suites:saved.suites,profileId:saved.profileId,revision:saved.revision});
  $('#schedule-now').onclick=()=>send('/api/schedule/run',{});
  const outcome=event=>event.type==='PASS'?'pass':['FAIL','ERROR'].includes(event.type)?'fail':event.type==='RUN'?'running':'neutral';
  function renderEvents(){

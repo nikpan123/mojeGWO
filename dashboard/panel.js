@@ -34,7 +34,7 @@ async function refresh(){
   if(document.body.dataset.environment==='prod')window.renderNotifications?.(state);
   $('#run-heading').textContent=(websiteSuite?3:serviceSuite?state.serviceHealth.expectedCount:state.expectedCount)+' kontroli · '+(document.body.dataset.environment==='prod'?'PROD':'TEST');
   $('#run-scope').textContent=websiteSuite?'3 strony: HTTPS, odpowiedź właściwej aplikacji, oczekiwany publiczny ekran i czas do 15 sekund. Bez logowania; zrzuty ekranów są w raporcie.':serviceSuite?'9 kontroli kontraktu trzech usług. Brak logowania, wyłączania zależności i automatycznej akceptacji odbioru.':'Zakres wynika z materiałów przypisanych do wybranego nauczyciela. Tylko włączone materiały biorą udział w testach.';
-  $('#scenarios-list').innerHTML=state.scenarios.map(s=>'<li><b>'+esc(s.code)+'</b> · '+(s.type==='manual'?'Ręczny odbiór na TEST':s.module?.startsWith('Endpointy')?'Automatyczny endpoint':s.module?.startsWith('Dostępność')?'Dostępność strony':'Smoke funkcjonalny')+'<p>'+esc(s.title)+'</p><small>'+esc(s.blocker||s.expected||'')+'</small></li>').join('');
+  window.renderScenarios?.(state);
   const last=state.history[0];$('#last-result').textContent=last?(names[last.status]||last.status):'Brak wyników';$('#last-count').textContent=last?.counts?`${last.counts.passed} / ${last.expectedCount||5}`:'—';
   if(!selected&&last)selected=last.id;
   const choice=$('#run-choice');const list=state.history.map(r=>`${r.id}:${r.status}`).join('|');if(choice.dataset.list!==list){choice.dataset.list=list;choice.innerHTML=state.history.map(r=>`<option value="${esc(r.id)}">${esc(new Date(r.startedAt).toLocaleString('pl-PL'))} · ${esc(names[r.status]||r.status)}</option>`).join('')||'<option value="">Brak przebiegów</option>';}
