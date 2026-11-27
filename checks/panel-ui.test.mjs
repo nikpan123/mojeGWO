@@ -90,6 +90,12 @@ test('dziennik wyróżnia wyniki, filtruje błędy i czyści tylko wpisy',async(
   await page.locator('#schedule-disable').click();await expect(page.locator('#schedule-status')).toHaveText('Harmonogram wyłączony');
   await page.locator('#schedule-event-filter').selectOption('failures');await expect(page.locator('.schedule-event')).toHaveCount(1);
   const passedTile=page.locator('[data-event-filter="passes"]'),failedTile=page.locator('[data-event-filter="failures"]'),allTile=page.locator('[data-event-filter="all"]');
+  await page.locator('[data-theme-value="dark"]').click();
+  for(const [tile,color] of [[passedTile,'rgb(165, 226, 188)'],[failedTile,'rgb(255, 189, 197)'],[allTile,'rgb(198, 211, 230)']]){
+   assert.equal(await tile.evaluate(el=>getComputedStyle(el).color),color);
+   assert.equal(await tile.locator('strong').evaluate(el=>getComputedStyle(el).color),color);
+   assert.equal(await tile.locator('span').evaluate(el=>getComputedStyle(el).color),color);
+  }
   await expect(failedTile).toHaveAttribute('aria-pressed','true');
   await passedTile.click();await expect(page.locator('.schedule-event')).toHaveCount(1);await expect(page.locator('.schedule-event--pass')).toHaveCount(1);
   await expect(page.locator('#schedule-event-filter')).toHaveValue('passes');await expect(passedTile).toHaveAttribute('aria-pressed','true');
