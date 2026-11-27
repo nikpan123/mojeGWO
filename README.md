@@ -41,6 +41,8 @@ Otwórz adres wyświetlony w terminalu. Panel próbuje portu **4182**, następni
 3. Przy wybranym materiale kliknij **Dodaj do kontroli**, wybierz sposób sprawdzania i zapisz. Multipodręcznik może być sprawdzany ze zmianą stron; aplikacja — jako sam dostęp, Kompozytor ze wskazaną klasą, katalog kart pracy lub dopasowany wzorzec. Samo pobranie listy nie przypisuje materiałów do testów.
 4. Użyj **Wybierz do testów** przy profilu albo listy **Nauczyciel** w widoku uruchamiania. Testy obejmą jego przypisane, włączone materiały. W harmonogramie nauczyciela wybiera się osobno.
 
+Pole **Wzorzec aplikacji** pojawia się tylko po wybraniu **Pełny test według istniejącego wzorca**. Pozostałe sposoby sprawdzania nie wymagają jego wyboru.
+
 <details>
 <summary>Zrzuty ekranu — przykładowe dane nauczyciela</summary>
 

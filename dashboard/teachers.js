@@ -23,7 +23,9 @@
   $('#material-dialog-title').textContent=resource?'Edytuj kontrolę materiału':'Przypisz materiał';$('#material-form-error').textContent='';materialOptions();$('#material-dialog').showModal();
  }
  function materialOptions(){
-  const f=$('#material-form'),adapter=f.elements.adapter.value,t=data.templates.find(t=>t.id===f.elements.templateId.value);
+  const f=$('#material-form'),adapter=f.elements.adapter.value,usesTemplate=adapter==='template',t=usesTemplate?data.templates.find(t=>t.id===f.elements.templateId.value):null;
+  f.elements.templateId.closest('label').hidden=!usesTemplate;
+  f.elements.templateId.disabled=!usesTemplate;
   $('#library-field').hidden=adapter!=='composer';f.elements.libraryLabel.required=adapter==='composer';
   const recognized=!!t?.approvedRules||['composer','worksheets'].includes(adapter);$('#rules-field').hidden=!recognized;f.elements.acceptRules.disabled=!recognized;if(!recognized)f.elements.acceptRules.checked=false;
   $('#adapter-note').textContent=adapter==='access'?'Sprawdzimy obecność i ważność dostępu. Działanie aplikacji nie będzie oznaczone jako sprawdzone.':adapter==='reader'?'Sprawdzimy obrazy stron oraz przejście do następnej rozkładówki.':adapter==='worksheets'?'Sprawdzimy katalog i załadowane zadania dla klas 1–3, blokując zapis zestawów.':adapter==='composer'?'Sprawdzimy wejście do wskazanej klasy i listę „Twoje zestawy”, bez zmiany zestawów.':'Użyjemy wcześniej skonfigurowanej czynności ze wzorca. Wybierz wzorzec pasujący do tej aplikacji.';
