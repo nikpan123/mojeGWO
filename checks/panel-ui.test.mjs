@@ -62,6 +62,23 @@ test('panel przełącza TEST i PROD, zachowuje funkcje i działa na telefonie',a
   await expect(page.locator('#teacher-choice option')).toHaveCount(1);assert.equal(await page.locator('#load-form').count(),0);
   await page.locator('nav a[href="#run"]').click();await expect(page.locator('#run')).toBeDisabled();
   assert.equal(await page.locator('#suite-choice option[value="websites"]').count(),1);
+  async function checkGitlabFields(environment){
+   await page.locator('nav a[href="#teachers"]').click();const isTest=environment==='test';let saves=0;
+   const endpoint='**/'+environment+'/api/teachers/save';
+   await page.route(endpoint,route=>{const input=route.request().postDataJSON();assert.equal(input.teacher.sharedGitlab,isTest);assert.equal(Object.hasOwn(input.credentials,'gitlabLogin'),isTest);assert.equal(Object.hasOwn(input.credentials,'gitlabPassword'),isTest);saves++;return route.fulfill({status:400,json:{error:'Sprawdzenie formularza bez zapisu.'}});});
+   for(const selector of ['#add-teacher','[data-action="edit"]']){
+    await page.locator(selector).click();const form=page.locator('#teacher-form'),details=form.locator('details');
+    await expect(details.locator('summary')).toHaveText(isTest?'Tożsamość i logowanie GitLaba':'Tożsamość konta');
+    if(await details.getAttribute('open')===null)await details.locator('summary').click();
+    await expect(form.locator('[name="accountDisplayName"]')).toBeVisible();await expect(form.locator('[name="accountUserId"]')).toBeVisible();
+    for(const name of ['gitlabLogin','gitlabPassword','sharedGitlab']){const field=form.locator('[name="'+name+'"]');if(isTest){await expect(field).toBeVisible();await expect(field).toBeEnabled();}else{await expect(field).toBeHidden();await expect(field).toBeDisabled();}}
+    await form.locator('[name="label"]').fill('Nauczyciel przykładowy');await form.locator('[name="accountEmail"]').fill('nauczyciel@example.com');
+    await form.locator('[type="submit"]').click();await expect(page.locator('#teacher-form-error')).toHaveText('Sprawdzenie formularza bez zapisu.');
+    await form.locator('[data-close-dialog]').click();
+   }
+   assert.equal(saves,2);await page.unroute(endpoint);
+  }
+  await checkGitlabFields('prod');
   async function checkWorksheetAddress(expected){
    await page.locator('nav a[href="#teachers"]').click();
    await page.locator('[data-action="add-resource"]').click();
@@ -106,6 +123,7 @@ test('panel przełącza TEST i PROD, zachowuje funkcje i działa na telefonie',a
   await page.locator('#environment-choice a').filter({hasText:'TEST'}).click();await page.waitForURL('**/test/');
   await expect(page.locator('#teacher-choice option')).toHaveCount(1);
   assert.equal(await page.locator('nav a[href="#schedule"]').count(),0);
+  await checkGitlabFields('test');
   await checkWorksheetAddress('https://kartypracy.apps.gwotest.pl/25/EW/1');
   await page.setViewportSize({width:390,height:844});await page.screenshot({path:path.join(dir,'test-mobile.png'),fullPage:true});
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);

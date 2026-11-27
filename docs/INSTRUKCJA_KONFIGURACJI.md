@@ -193,6 +193,8 @@ Przy uruchomieniu z PowerShell pozostaw proces panelu działający. Zakończysz 
 2. Kliknij **Dodaj nauczyciela**.
 3. Wpisz czytelną nazwę profilu, e-mail oraz hasło do portalu nauczyciela.
 4. W TEST rozwiń **Tożsamość i logowanie GitLaba**. Pozostaw korzystanie ze wspólnego logowania, jeśli dane GitLaba są w `.env.test`, albo podaj osobne dane.
+W PROD sekcja nazywa się **Tożsamość konta** — pola loginu, hasła i wspólnego logowania GitLaba są ukryte zarówno przy dodawaniu, jak i edycji nauczyciela.
+
 5. Nieznaną nazwę wyświetlaną i identyfikator konta pozostaw puste. Pozostaw profil aktywny i kliknij **Zapisz profil**.
 
 ![Dodawanie nauczyciela — dane przykładowe](images/dodaj-nauczyciela.png)

@@ -1,6 +1,10 @@
 (()=>{
  const $=s=>document.querySelector(s),esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
  let data=null,teacherId='',resourceId='',revision=-1,busy=false;
+ const usesGitlab=document.body.dataset.environment==='test',gitlabFields=$('.gitlab-fields');
+ gitlabFields.hidden=!usesGitlab;
+ for(const input of gitlabFields.querySelectorAll('input'))input.disabled=!usesGitlab;
+ gitlabFields.closest('details').querySelector('summary').textContent=usesGitlab?'Tożsamość i logowanie GitLaba':'Tożsamość konta';
  const materialQueries=new Map();
  const normalized=value=>String(value||'').toLocaleLowerCase('pl').normalize('NFD').replace(/\p{Diacritic}/gu,'').replace(/ł/g,'l').trim();
  function filterMaterials(scope){
@@ -52,8 +56,8 @@
  }
  $('#add-teacher').onclick=()=>editor();
  $('#teacher-form').onsubmit=async e=>{
-  e.preventDefault();const f=e.target,t=Object.fromEntries(new FormData(f));t.enabled=f.elements.enabled.checked;t.sharedGitlab=f.elements.sharedGitlab.checked;
-  const credentials={portalPassword:f.elements.portalPassword.value,gitlabPassword:f.elements.gitlabPassword.value,gitlabLogin:f.elements.gitlabLogin.value};delete t.portalPassword;delete t.gitlabPassword;delete t.gitlabLogin;
+  e.preventDefault();const f=e.target,t=Object.fromEntries(new FormData(f));t.enabled=f.elements.enabled.checked;t.sharedGitlab=usesGitlab&&f.elements.sharedGitlab.checked;
+  const credentials={portalPassword:f.elements.portalPassword.value};if(usesGitlab){credentials.gitlabPassword=f.elements.gitlabPassword.value;credentials.gitlabLogin=f.elements.gitlabLogin.value;}delete t.portalPassword;delete t.gitlabPassword;delete t.gitlabLogin;
   f.elements.portalPassword.value='';f.elements.gitlabPassword.value='';const submit=f.querySelector('[type=submit]');submit.disabled=true;
   try{const result=await change('save',{teacher:t,credentials});teacherId=result.id;$('#teacher-dialog').close();revision=-1;await window.refreshMojeGwo?.();}catch(e){$('#teacher-form-error').textContent=e.message;}finally{credentials.portalPassword='';credentials.gitlabPassword='';submit.disabled=false;}
  };
