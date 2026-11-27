@@ -37,6 +37,12 @@
   f.elements.templateId.closest('label').hidden=!usesTemplate;
   f.elements.templateId.disabled=!usesTemplate;
   $('#library-field').hidden=adapter!=='composer';f.elements.libraryLabel.required=adapter==='composer';
+  const entry=f.elements.entryURL,worksheets=adapter==='worksheets';
+  const worksheetURL='https://kartypracy.apps.'+(document.body.dataset.environment==='prod'?'gwo.pl':'gwotest.pl')+'/25/EW/1';
+  entry.required=worksheets;
+  entry.closest('label').firstChild.textContent=worksheets?'Adres katalogu Kart pracy (wymagany, bez parametrów)':'Adres aplikacji lub czytnika (opcjonalnie, bez parametrów)';
+  entry.placeholder=worksheets?worksheetURL:'';
+  if(worksheets&&!entry.value.trim())entry.value=worksheetURL;
   const recognized=!!t?.approvedRules||['composer','worksheets'].includes(adapter);$('#rules-field').hidden=!recognized;f.elements.acceptRules.disabled=!recognized;if(!recognized)f.elements.acceptRules.checked=false;
   $('#adapter-note').textContent=adapter==='access'?'Sprawdzimy obecność i ważność dostępu. Działanie aplikacji nie będzie oznaczone jako sprawdzone.':adapter==='reader'?'Sprawdzimy obrazy stron oraz przejście do następnej rozkładówki.':adapter==='worksheets'?'Sprawdzimy katalog i załadowane zadania dla klas 1–3, blokując zapis zestawów.':adapter==='composer'?'Sprawdzimy wejście do wskazanej klasy i listę „Twoje zestawy”, bez zmiany zestawów.':'Użyjemy wcześniej skonfigurowanej czynności ze wzorca. Wybierz wzorzec pasujący do tej aplikacji.';
  }

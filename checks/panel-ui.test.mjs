@@ -33,6 +33,20 @@ test('panel przełącza TEST i PROD, zachowuje funkcje i działa na telefonie',a
   await expect(page.locator('#teacher-choice option')).toHaveCount(1);assert.equal(await page.locator('#load-form').count(),0);
   await page.locator('nav a[href="#run"]').click();await expect(page.locator('#run')).toBeDisabled();
   assert.equal(await page.locator('#suite-choice option[value="websites"]').count(),1);
+  async function checkWorksheetAddress(expected){
+   await page.locator('nav a[href="#teachers"]').click();
+   await page.locator('[data-action="add-resource"]').click();
+   const material=page.locator('#material-form'),entry=material.locator('[name="entryURL"]');
+   await material.locator('[name="kind"]').selectOption('aplikacja');
+   await material.locator('[name="adapter"]').selectOption('worksheets');
+   await expect(entry).toHaveValue(expected);await expect(entry).toHaveAttribute('required','');
+   await expect(entry.locator('..')).toContainText('wymagany');
+   await entry.fill('https://example.com/pozostaw');
+   await material.locator('[name="adapter"]').selectOption('access');await expect(entry).not.toHaveAttribute('required','');
+   await material.locator('[name="adapter"]').selectOption('worksheets');await expect(entry).toHaveValue('https://example.com/pozostaw');
+   await material.locator('[data-close-dialog]').click();
+  }
+  await checkWorksheetAddress('https://kartypracy.apps.gwo.pl/25/EW/1');
   await page.locator('nav a[href="#scenarios"]').click();
   await expect(page.locator('.scenario-group')).toHaveCount(4);
   await expect(page.locator('.scenario-group[data-group="functional"] .scenario-card')).toHaveCount(5);
@@ -49,6 +63,7 @@ test('panel przełącza TEST i PROD, zachowuje funkcje i działa na telefonie',a
   await page.locator('#environment-choice a').filter({hasText:'TEST'}).click();await page.waitForURL('**/test/');
   await expect(page.locator('#teacher-choice option')).toHaveCount(1);
   assert.equal(await page.locator('nav a[href="#schedule"]').count(),0);
+  await checkWorksheetAddress('https://kartypracy.apps.gwotest.pl/25/EW/1');
   await page.setViewportSize({width:390,height:844});await page.screenshot({path:path.join(dir,'test-mobile.png'),fullPage:true});
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
   assert.deepEqual(errors,[]);
