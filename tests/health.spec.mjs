@@ -74,6 +74,7 @@ test('HC-01 — panel działa i sesja należy do właściwego nauczyciela', asyn
 });
 
 for (const resource of settings.resources) {
+  const composerScreenshots=['composer','worksheets'].includes(resource.adapter)||resource.functionalMode==='worksheet-catalog'||(resource.readySelector||'').includes('library-info-btn');
   test(`HC-02/${resource.id} — nauczyciel ma aktywny dostęp: ${resource.title}`, async ({ page }) => {
     const {access} = await prepareResource(page, resource);
     await test.step('Ważność dostępu', async () => {
@@ -111,7 +112,7 @@ for (const resource of settings.resources) {
       await expect(app.getByText('Brak autoryzacji',{exact:true}).first(),'Sesja aplikacji utraciła autoryzację.').toBeHidden();
       if(resource.adapter==='composer'&&resource.libraryLabel){const resolved=await resolveComposerLibrary(app,resource.libraryLabel);selectedLibrary=resolved.library;await expect(selectedLibrary).toBeVisible();await test.info().attach('wybor-dostepu-do-biblioteki',{body:JSON.stringify(resolved.selection),contentType:'application/json'});}
       else if(resource.readySelector) await expect(resource.functionalMode==='reader-next'?app.locator(resource.readySelector).first():app.locator(resource.readySelector)).toBeVisible();
-      await test.info().attach('ekran-aplikacji', { body:await app.screenshot({fullPage:true}), contentType:'image/png' });
+      await test.info().attach(composerScreenshots?'kompozytor-01-otwarcie':'ekran-aplikacji', { body:await app.screenshot({fullPage:true,animations:'disabled'}), contentType:'image/png' });
     });
     await test.step('Brak blokady dostępu, autoryzacji lub pierwszej akceptacji regulaminu', async () => {
       await expect((selectedLibrary||app).getByText('Dostęp zakończony', {exact:true}).first(),'Ważność wybranego dostępu; inne klasy nie należą do tego scenariusza.').toBeHidden();
@@ -156,7 +157,6 @@ for (const resource of settings.resources) {
         await expect.poll(()=>tasks.count()).toBeGreaterThan(0);
         await expect.poll(()=>tasks.evaluateAll(ns=>ns.length>0&&ns.every(n=>n.complete&&n.naturalWidth>0))).toBe(true);
         await test.info().attach('katalog-zadan-klasy-1-3',{body:JSON.stringify({scope:'Katalog aplikacji dla klas 1–3',proposals:await proposals.innerText(),loadedTasks:await tasks.count(),blockedWrites:writes}),contentType:'application/json'});
-        await test.info().attach('katalog-zadan',{body:await app.screenshot({fullPage:false}),contentType:'image/png'});
         expect(writes,'Przeglądanie katalogu nie powinno próbować zapisywać danych').toEqual([]);
         return;
       }
@@ -165,6 +165,10 @@ for (const resource of settings.resources) {
       await expect(surface.locator(resource.resultSelector)).toBeHidden();
       await (library||surface.locator(resource.actionSelector)).click();
       await expect(surface.locator(resource.resultSelector)).toBeVisible();
+    });
+    if(composerScreenshots)await test.step('Zrzut po sprawdzeniu funkcji Kompozytora',async()=>{
+      await app.waitForLoadState('networkidle',{timeout:10000}).catch(()=>{});
+      await test.info().attach('kompozytor-02-wynik',{body:await app.screenshot({fullPage:true,animations:'disabled'}),contentType:'image/png'});
     });
   });
 }

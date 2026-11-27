@@ -106,6 +106,8 @@ Zestaw działa w przeglądarce Playwright dla wybranego nauczyciela i jego włą
 2. Sprawdza widoczność właściwej karty i brak komunikatu **Dostęp zakończony** dla wybranego dostępu.
 3. Klika kartę klasy lub biblioteki i wymaga pojawienia się zakładki **Twoje zestawy**. Nie tworzy, nie edytuje, nie drukuje ani nie usuwa zestawów; nie sprawdza też treści wszystkich istniejących zestawów.
 
+Każdy test działania Kompozytora zapisuje dwa zrzuty: **1. Po otwarciu aplikacji** i **2. Po sprawdzeniu funkcji**. Dla matematyki i fizyki drugi obraz pokazuje ekran po wejściu do klasy z zakładką **Twoje zestawy**, a dla edukacji wczesnoszkolnej — załadowany katalog zadań. Ten sam układ obowiązuje w raporcie i ręcznej galerii panelu; wcześniejsze przebiegi zachowują dotychczasowe obrazy.
+
 Regulamin może zostać zaakceptowany automatycznie tylko przy zapisanej zgodzie dla rozpoznanej aplikacji. Dla trybu **Tylko obecność i ważność dostępu** wykonywane jest HC-02, bez otwierania materiału i HC-03. Inne warianty wykonują skonfigurowaną czynność i sprawdzają jej oczekiwany rezultat. Zestaw zawiera **jedną kontrolę konta + kontrolę dostępu do każdego materiału + kontrolę działania każdego materiału z włączonym takim zakresem**. Raport pokazuje wyniki poszczególnych kontroli, zrzuty i załączniki diagnostyczne.
 
 ## Harmonogram
