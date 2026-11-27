@@ -3,6 +3,7 @@ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 const names={PASS:'Zaliczony',FAIL:'Niezaliczony',RUNNING:'W trakcie',STOPPED:'Zatrzymany',passed:'Zaliczony',failed:'Błąd',skipped:'Pominięty',timedOut:'Przekroczony czas'};
 let selected='',state=null,loading=false,previewKey='',refreshing=false;
 let galleryKey='',screenshots=[],screenshotIndex=0;
+const screenshotTitle=image=>image.testTitle.split(' · ')[0];
 function showScreenshot(){
  const image=screenshots[screenshotIndex];if(!image)return;
  const preview=$('#browser-preview'),runId=selected;
@@ -11,7 +12,10 @@ function showScreenshot(){
  preview.onerror=()=>{if(selected===runId){preview.hidden=true;$('#preview-note').hidden=false;$('#preview-note').textContent='Nie udało się wczytać tego zrzutu. Wybierz inny obraz lub otwórz raport.';}};
  preview.alt=image.testTitle+' · '+image.label;preview.src=window.mojeGwoURL(image.url);
  $('#screenshot-choice').value=String(screenshotIndex);$('#screenshot-count').textContent=(screenshotIndex+1)+' / '+screenshots.length;
- $('#screenshot-caption').hidden=false;$('#screenshot-caption').textContent=image.testTitle+' · '+image.label+(image.status?' · '+(names[image.status]||image.status):'');
+ const caption=$('#screenshot-caption'),description=document.createElement('div'),title=document.createElement('strong'),label=document.createElement('span');
+ title.textContent=screenshotTitle(image);label.textContent=image.label;description.append(title,label);caption.replaceChildren(description);
+ if(image.status){const result=document.createElement('span');result.className='screenshot-result';result.dataset.outcome=image.status==='passed'?'pass':['failed','timedOut','interrupted'].includes(image.status)?'fail':'neutral';result.textContent=names[image.status]||image.status;caption.append(result);}
+ caption.hidden=false;
  $('#screenshot-prev').disabled=screenshotIndex===0;$('#screenshot-next').disabled=screenshotIndex===screenshots.length-1;
  $('#screenshot-open').href=window.mojeGwoURL(image.url);
 }
@@ -73,7 +77,7 @@ async function live(){
      const response=await fetch(`/api/runs/${runId}/screenshots`);if(!response.ok)throw new Error('Nie udało się odczytać zrzutów.');
      const gallery=await response.json();if(selected!==runId)return;
      screenshots=gallery.screenshots;screenshotIndex=0;galleryKey=key;
-     const choice=$('#screenshot-choice');choice.replaceChildren(...screenshots.map((image,index)=>{const option=document.createElement('option');option.value=String(index);option.textContent=(index+1)+'. '+image.testTitle+' · '+image.label;return option;}));
+     const choice=$('#screenshot-choice');choice.replaceChildren(...screenshots.map((image,index)=>{const option=document.createElement('option');option.value=String(index);option.textContent=(index+1)+'. '+screenshotTitle(image)+' — '+image.label;option.title=image.testTitle+' · '+image.label;return option;}));
      if(screenshots.length)showScreenshot();
     }
     $('#screenshot-controls').hidden=screenshots.length===0;
