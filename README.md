@@ -73,6 +73,31 @@ npm.cmd run check:local             # lokalne kontrole kodu i panelu
 
 Bez parametru środowiska wybierany jest TEST. Przed testami przeglądarkowymi sesja jest sprawdzana i w razie potrzeby odnawiana z lokalnych danych konta.
 
+## Co sprawdza „Konto nauczyciela i materiały”
+
+Zestaw działa w przeglądarce Playwright dla wybranego nauczyciela i jego włączonych materiałów. Przed startem sprawdza zapisaną sesję, a w razie potrzeby ponawia logowanie z lokalnych danych.
+
+| Kontrola | Sposób sprawdzania |
+| --- | --- |
+| **HC-01 — konto i panel** | Otwiera katalog materiałów. Sprawdza poprawną odpowiedź strony i API konta, zgodność identyfikatora oraz nazwy nauczyciela, wymaganą rolę i nazwę widoczną w panelu. |
+| **HC-02 — dostęp do materiału** | Pobiera listę dostępów z API, rozpoznaje materiał po pełnej nazwie i zapisanym identyfikatorze dostępu, jeśli jest przypisany. Wybiera właściwą zakładkę i grupę, odnajduje jednoznaczny kafelek oraz potwierdza aktywny, niewygasły dostęp nauczycielski. |
+| **HC-03 — działanie materiału** | Klika uruchomienie na kafelku i czeka na nową kartę HTTPS. Jeśli skonfigurowano adres aplikacji, sprawdza jej domenę i ścieżkę. Weryfikuje gotowość interfejsu oraz brak komunikatów o zakończonym dostępie i braku autoryzacji. Następnie wykonuje czynność opisaną poniżej. |
+
+**Po otwarciu multipodręcznika — wariant „Czytnik — dostęp i zmiana stron”:**
+
+1. Czeka na widoczne obrazy stron i potwierdza ich załadowanie: obraz musi mieć zakończone ładowanie oraz niezerową szerokość.
+2. Jeśli tak ustawiono materiał i czytnik pokazuje jeszcze okładkę, przechodzi najpierw do pierwszej rozkładówki.
+3. Zapamiętuje oznaczenie aktualnych stron i źródła ich obrazów, po czym klika **następną stronę**.
+4. Wymaga zmiany oznaczenia stron **i** źródeł obrazów oraz poprawnego załadowania nowych obrazów. W raporcie zapisuje numery przed i po przejściu oraz informację o załadowanej treści. Sprawdza jedno przejście, nie wszystkie strony podręcznika.
+
+**Po otwarciu Kompozytora — wariant „Kompozytor — dostęp i lista zestawów”:**
+
+1. Odnajduje bibliotekę lub klasę wskazaną w konfiguracji materiału. Przy kilku dostępach do tego samego katalogu wybiera jednoznaczny aktywny dostęp z najpóźniejszym terminem ważności; niejednoznaczność kończy się błędem.
+2. Sprawdza widoczność właściwej karty i brak komunikatu **Dostęp zakończony** dla wybranego dostępu.
+3. Klika kartę klasy lub biblioteki i wymaga pojawienia się zakładki **Twoje zestawy**. Nie tworzy, nie edytuje, nie drukuje ani nie usuwa zestawów; nie sprawdza też treści wszystkich istniejących zestawów.
+
+Regulamin może zostać zaakceptowany automatycznie tylko przy zapisanej zgodzie dla rozpoznanej aplikacji. Dla trybu **Tylko obecność i ważność dostępu** wykonywane jest HC-02, bez otwierania materiału i HC-03. Inne warianty wykonują skonfigurowaną czynność i sprawdzają jej oczekiwany rezultat. Zestaw zawiera **jedną kontrolę konta + kontrolę dostępu do każdego materiału + kontrolę działania każdego materiału z włączonym takim zakresem**. Raport pokazuje wyniki poszczególnych kontroli, zrzuty i załączniki diagnostyczne.
+
 ## Harmonogram
 
 W panelu **PROD → Harmonogram** wybierz odstęp, zestawy i nauczyciela, włącz automatyczne wykonywanie i zapisz. Komputer i panel muszą działać; samą kartę przeglądarki można zamknąć. Zestawy wykonują się kolejno, a zajęty termin jest pomijany. Harmonogram można wyłączyć w tym samym widoku. Testy obciążeniowe nie są uruchamiane z harmonogramu.
