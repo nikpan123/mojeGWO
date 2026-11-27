@@ -6,6 +6,8 @@ import {root} from '../lib/environment.mjs';
 import {createApplication} from '../dashboard/server.mjs';
 import fs from 'node:fs';
 import os from 'node:os';
+import http from 'node:http';
+import {listenApplication} from '../dashboard/server.mjs';
 import {healthDefaults,saveHealthConfig,loadHealthConfig} from '../lib/service-health.mjs';
 
 async function probe(environment) {
@@ -40,6 +42,22 @@ test('zapis adresów usług TEST nie nadpisuje ustawień PROD',()=>{
     assert.equal(loadHealthConfig(directory,'prod').environment,'prod');
     assert.deepEqual(fs.readdirSync(path.join(directory,'config')).sort(),['service-health.prod.local.json','service-health.test.local.json']);
   }finally{fs.rmSync(directory,{recursive:true,force:true});}
+});
+test('zajęte porty nie blokują uruchomienia wspólnego panelu',async()=>{
+  const blockers=[http.createServer(),http.createServer()];
+  let server;
+  try{
+    for(const blocker of blockers)await new Promise(resolve=>blocker.listen(0,'127.0.0.1',resolve));
+    server=await createApplication();
+    const origin=await listenApplication(server,{port:blockers[0].address().port,fallbackPort:blockers[1].address().port});
+    assert.ok(blockers.every(blocker=>blocker.address().port!==server.address().port));
+    const response=await fetch(origin+'/test/api/state');
+    assert.equal(response.status,200);assert.equal((await response.json()).environment,'test');
+    assert.equal(server.listenerCount('error'),0);
+  }finally{
+    if(server?.listening)await new Promise(resolve=>server.close(resolve));
+    for(const blocker of blockers)await new Promise(resolve=>blocker.close(resolve));
+  }
 });
 test('jeden panel udostępnia oba środowiska i odrzuca mieszanie tokenów',async()=>{
   const server=await createApplication();

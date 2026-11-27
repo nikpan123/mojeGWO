@@ -15,7 +15,7 @@ export async function createApplication({defaultEnvironment='test'}={}) {
     if(workers.has(environment))return workers.get(environment);
     if(pending.has(environment))return pending.get(environment);
     const promise=new Promise((resolve,reject)=>{
-      const child=fork(path.join(root,'dashboard/worker.mjs'),[],{cwd:root,windowsHide:true,stdio:['ignore','inherit','inherit','ipc'],env:{...process.env,MOJE_GWO_ENV:environment,MOJE_GWO_RUN_CONFIG:'',MOJE_GWO_PROFILE_ID:''}});
+      const child=fork(path.join(root,'dashboard/worker.mjs'),[],{cwd:root,windowsHide:true,stdio:['ignore','inherit','inherit','ipc'],env:{...process.env,MOJE_GWO_ENV:environment,MOJE_GWO_PANEL_ORIGIN:'http://127.0.0.1:'+server.address().port,MOJE_GWO_RUN_CONFIG:'',MOJE_GWO_PROFILE_ID:''}});
       const timeout=setTimeout(()=>{child.kill();reject(new Error('Nie uruchomiono środowiska.'));},15000);
       child.once('error',error=>{clearTimeout(timeout);reject(error);});
       child.once('exit',()=>{clearTimeout(timeout);workers.delete(environment);pending.delete(environment);reject(new Error('Proces środowiska został zamknięty.'));});
@@ -48,9 +48,29 @@ export async function createApplication({defaultEnvironment='test'}={}) {
   server.on('close',()=>{closing=true;for(const {child} of workers.values())child.kill();for(const promise of pending.values())void promise.then(({child})=>child.kill(),()=>{});});
   return server;
 }
+export async function listenApplication(server,{port=4182,fallbackPort=4184}={}) {
+  if(!Number.isInteger(port)||port<0||port>65535)throw new Error('Podaj poprawny port od 0 do 65535.');
+  for(const candidate of [...new Set([port,fallbackPort,0])]) {
+    try {
+      await new Promise((resolve,reject)=>{
+        const failed=error=>{server.off('listening',ready);reject(error);};
+        const ready=()=>{server.off('error',failed);resolve();};
+        server.once('error',failed);server.once('listening',ready);
+        server.listen(candidate,'127.0.0.1');
+      });
+      return 'http://127.0.0.1:'+server.address().port;
+    } catch(error) {if(error.code!=='EADDRINUSE')throw error;}
+  }
+  throw new Error('Nie znaleziono wolnego portu dla panelu.');
+}
 if(process.argv[1]&&path.resolve(process.argv[1])===fileURLToPath(import.meta.url)) {
-  const args=process.argv.slice(2),index=args.indexOf('--env');
+  const args=process.argv.slice(2),index=args.indexOf('--env'),portIndex=args.indexOf('--port');
   const selected=index>=0?args[index+1]:process.env.MOJE_GWO_ENV||'test';
-  const server=await createApplication({defaultEnvironment:selected});
-  server.listen(4182,'127.0.0.1',()=>console.log('moje.gwo — wybierz TEST lub PROD: http://127.0.0.1:4182'));
+  try {
+    const server=await createApplication({defaultEnvironment:selected});
+    const requestedPort=Number(portIndex>=0?args[portIndex+1]:process.env.MOJE_GWO_PANEL_PORT||4182);
+    const address=await listenApplication(server,{port:requestedPort});
+    if(server.address().port!==requestedPort)console.log('Port '+requestedPort+' jest zajęty. Panel używa wolnego portu.');
+    console.log('moje.gwo — wybierz TEST lub PROD: '+address);
+  } catch(error) {console.error('Nie można uruchomić panelu: '+error.message);process.exitCode=1;}
 }

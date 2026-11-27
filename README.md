@@ -12,7 +12,9 @@ npx.cmd playwright install chromium
 npm.cmd run panel
 ```
 
-Otwórz **http://127.0.0.1:4182**. Panel umożliwia przełączanie TEST i PROD. Adresy `/test/` i `/prod/` można też otworzyć w osobnych kartach. Zmiana środowiska nie przenosi kont i nie zmienia środowiska trwających testów. Otwarcie panelu nie uruchamia testów; wcześniej zapisany i włączony harmonogram PROD wznawia działanie po otwarciu tego środowiska.
+Otwórz adres wyświetlony w PowerShell, domyślnie **http://127.0.0.1:4182**. Jeśli port jest zajęty, panel wybierze 4184, a jeśli ten też jest zajęty — inny wolny port. Nie trzeba zamykać poprzednich paneli. Własny port można podać przez `npm.cmd run panel -- --port 4184`.
+
+Panel umożliwia przełączanie TEST i PROD. Adresy `/test/` i `/prod/` można też otworzyć w osobnych kartach. Zmiana środowiska nie przenosi kont i nie zmienia środowiska trwających testów. Otwarcie panelu nie uruchamia testów; wcześniej zapisany i włączony harmonogram PROD wznawia działanie po otwarciu tego środowiska.
 
 ## Konfiguracja
 

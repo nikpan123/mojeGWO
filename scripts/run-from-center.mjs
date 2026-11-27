@@ -2,7 +2,7 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import {environment,dataRoot} from '../lib/environment.mjs';
-const origin='http://127.0.0.1:4182',runner=origin+'/'+environment;
+const origin=process.env.MOJE_GWO_PANEL_ORIGIN||'http://127.0.0.1:4182',runner=origin+'/'+environment;
 const html=await(await fetch(runner+'/')).text();
 const token=html.match(/name="health-token" content="([^"]+)"/)?.[1];
 if(!token)throw new Error('Otwórz wspólny panel poleceniem npm run panel.');
