@@ -4,6 +4,8 @@ Wspólny panel do sprawdzania kont nauczycieli, materiałów i usług GWO. Środ
 
 **Instrukcja krok po kroku ze zrzutami:** [Konfiguracja i uruchamianie testów](docs/INSTRUKCJA_KONFIGURACJI.md).
 
+**Pola formularza materiału:** [co wpisać, skąd wziąć dane i gotowe przykłady](docs/INSTRUKCJA_KONFIGURACJI.md#jak-wypełnić-pola-materiału). Ta sama pomoc jest dostępna w panelu przez **Jak wypełnić pola?**.
+
 ## Instalacja
 
 Wymagane: **Git, Node.js 22+ i npm**. Polecenia dla PowerShell:

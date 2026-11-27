@@ -1,7 +1,8 @@
 const $=s=>document.querySelector(s);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const names={PASS:'Zaliczony',FAIL:'Niezaliczony',RUNNING:'W trakcie',passed:'Zaliczony',failed:'Błąd',skipped:'Pominięty',timedOut:'Przekroczony czas'};
+const names={PASS:'Zaliczony',FAIL:'Niezaliczony',RUNNING:'W trakcie',STOPPED:'Zatrzymany',passed:'Zaliczony',failed:'Błąd',skipped:'Pominięty',timedOut:'Przekroczony czas'};
 let selected='',state=null,loading=false,previewKey='',refreshing=false;
+const normalTitle=document.title;let stopPending=false;
 const clockTime=new Intl.DateTimeFormat('pl-PL',{timeZone:'Europe/Warsaw',hour:'2-digit',minute:'2-digit',second:'2-digit'});
 const clockDate=new Intl.DateTimeFormat('pl-PL',{timeZone:'Europe/Warsaw',day:'numeric',month:'long',year:'numeric'});
 const nextTestTime=new Intl.DateTimeFormat('pl-PL',{timeZone:'Europe/Warsaw',day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit'});
@@ -12,6 +13,10 @@ function renderHeaderStatus(){
  const status=$('#panel-test-status'),run=state.history.find(run=>run.status==='RUNNING'),schedule=state.schedule;
  if(!status)return;
  const running=state.running||schedule?.running;
+ document.title=running?(state.stopping?'Zatrzymywanie testów':'Testy w toku')+' — '+normalTitle:normalTitle;
+ const stop=$('#panel-stop-test');
+ const stopSchedule=document.body.dataset.environment==='prod'&&(schedule?.enabled||schedule?.running);
+ if(stop){stop.hidden=!state.running&&!stopSchedule;stop.disabled=stopPending||state.stopping||state.busy||(state.running&&!state.activeRunId);stop.textContent=stopPending||state.stopping?'Zatrzymywanie…':stopSchedule?'Zatrzymaj harmonogram':'Zatrzymaj test';}
  status.classList.toggle('is-running',!!running);
  if(running){setText(status,'Testy w toku'+(run?' · '+({functional:'Konto i materiały',websites:'Dostępność stron',services:'Healthcheck usług',load:'Obciążenie TEST'}[run.suite]||'Trwa przebieg'): ' · Przygotowanie przebiegu'));status.href='#live';}
  else if(state.busy){setText(status,'Trwa odczyt lub zapis konfiguracji');status.href='#teachers';}
@@ -19,6 +24,16 @@ function renderHeaderStatus(){
  else{setText(status,document.body.dataset.environment==='prod'?'Harmonogram wyłączony':'Testy uruchamiane ręcznie');status.href='#run';}
 }
 $('#panel-test-status')?.addEventListener('click',()=>{const run=state?.history.find(run=>run.status==='RUNNING');if(run){selected=run.id;previewKey='';void live();}});
+$('#panel-stop-test')?.addEventListener('click',async()=>{
+ if(stopPending||!state)return;
+ const runId=state.activeRunId,scheduleRevision=state.schedule?.revision;stopPending=true;renderHeaderStatus();
+ try{
+  const response=await fetch('/api/stop',{method:'POST',headers:{'Content-Type':'application/json','X-Health-Token':$('meta[name=health-token]').content},body:JSON.stringify({runId,scheduleRevision})});
+  const result=await response.json();if(!response.ok)throw new Error(result.error);
+  $('#message').textContent=result.schedule?'Wyłączono harmonogram i zlecono zatrzymanie bieżącego testu.':'Zlecono zatrzymanie testu.';
+ }catch(error){$('#message').textContent=error.message;location.hash='run';}
+ finally{stopPending=false;await refresh();}
+});
 function navigate(){const view=location.hash.slice(1)||'overview';document.querySelectorAll('[data-view]').forEach(el=>el.hidden=el.dataset.view!==view);document.querySelectorAll('nav a').forEach(a=>a.classList.toggle('active',a.hash==='#'+view));}
 if(document.body.dataset.environment==='test'){for(const id of ['schedule','notifications']){document.querySelector('a[href="#'+id+'"]')?.remove();document.querySelector('[data-view="'+id+'"]')?.remove();}}
 window.addEventListener('hashchange',navigate);navigate();

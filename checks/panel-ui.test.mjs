@@ -47,6 +47,20 @@ test('panel przełącza TEST i PROD, zachowuje funkcje i działa na telefonie',a
    await entry.fill('https://example.com/pozostaw');
    await material.locator('[name="adapter"]').selectOption('access');await expect(entry).not.toHaveAttribute('required','');
    await material.locator('[name="adapter"]').selectOption('worksheets');await expect(entry).toHaveValue('https://example.com/pozostaw');
+   await material.locator('[name="adapter"]').selectOption('composer');
+   await expect(material.locator('[name="libraryLabel"]').locator('..')).toContainText('wewnątrz Kompozytora');
+   await expect(material.locator('[name="groupLabel"]').locator('..')).toContainText('Grupa na stronie „Moje dostępy”');
+   await expect(page.locator('#adapter-note')).toContainText('numer klasy z kafelka');
+   const help=material.locator('a.material-help');await expect(help).toHaveAttribute('target','_blank');
+   if(expected.includes('apps.gwo.pl')){
+    await material.locator('[name="libraryLabel"]').fill('6');
+    const opened=page.waitForEvent('popup');await help.click();const guide=await opened;await guide.waitForLoadState();
+    await expect(guide.locator('h1')).toHaveText('Jak wypełnić pola materiału');
+    await expect(guide.locator('table')).toContainText('Grupa na stronie „Moje dostępy”');
+    await expect(guide.locator('main')).toContainText('Przykład: Kompozytor matematyki, klasa 6');
+    await expect.poll(()=>guide.locator('img').first().evaluate(image=>image.naturalWidth)).toBeGreaterThan(0);
+    await guide.close();await expect(material.locator('[name="libraryLabel"]')).toHaveValue('6');
+   }
    await material.locator('[data-close-dialog]').click();
   }
   await checkWorksheetAddress('https://kartypracy.apps.gwo.pl/25/EW/1');
@@ -89,12 +103,21 @@ test('dziennik wyróżnia wyniki, filtruje błędy i czyści tylko wpisy',async(
   await page.route('**/prod/api/state',route=>route.fulfill({json:state}));
   await page.route('**/prod/api/schedule',route=>{const body=route.request().postDataJSON();assert.equal(body.enabled,false);assert.ok(!Object.hasOwn(body,'events'));assert.ok(route.request().postData().length<1024);state.schedule.enabled=false;state.schedule.revision++;return route.fulfill({json:{schedule:state.schedule}});});
   await page.route('**/prod/api/schedule/events/clear',route=>{assert.equal(route.request().method(),'POST');clears++;state.schedule.events=[];return route.fulfill({json:{schedule:state.schedule}});});
+  let stopCalls=0;
+  await page.route('**/prod/api/stop',route=>{assert.equal(route.request().method(),'POST');const input=route.request().postDataJSON();assert.equal(input.runId,state.activeRunId);assert.equal(input.scheduleRevision,state.schedule.revision);stopCalls++;state.stopping=true;state.schedule.enabled=false;state.schedule.revision++;return route.fulfill({json:{stopping:true,schedule:state.schedule}});});
   await page.goto(origin+'/prod/#schedule');
   await expect(page.locator('#panel-test-status')).toHaveText('Kolejny test: 27.11.2026, 10:30:00');
-  state.running=true;state.history=[{id:'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',status:'RUNNING',suite:'functional',startedAt:'2026-11-27T09:29:00Z',expectedCount:5}];
+  await expect(page.locator('#panel-stop-test')).toHaveText('Zatrzymaj harmonogram');await expect(page.locator('#panel-stop-test')).toBeEnabled();
+  state.running=true;state.activeRunId='bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb';state.history=[{id:state.activeRunId,status:'RUNNING',suite:'functional',startedAt:'2026-11-27T09:29:00Z',expectedCount:5}];
   await page.evaluate(()=>window.refreshMojeGwo());await expect(page.locator('#panel-test-status')).toHaveText('Testy w toku · Konto i materiały');
   await expect(page.locator('#panel-test-status')).toHaveAttribute('href','#live');
-  state.running=false;state.history=[];await page.evaluate(()=>window.refreshMojeGwo());
+  await expect(page).toHaveTitle('Testy w toku — moje.gwo PROD — Centrum testów');
+  await expect(page.locator('#panel-stop-test')).toBeEnabled();await page.locator('#panel-stop-test').click();
+  await expect(page.locator('#panel-stop-test')).toHaveText('Zatrzymywanie…');await expect(page.locator('#panel-stop-test')).toBeDisabled();
+  await expect(page).toHaveTitle('Zatrzymywanie testów — moje.gwo PROD — Centrum testów');assert.equal(stopCalls,1);
+  state.running=false;state.stopping=false;state.activeRunId=null;state.history=[];await page.evaluate(()=>window.refreshMojeGwo());
+  await expect(page.locator('#panel-stop-test')).toBeHidden();await expect(page).toHaveTitle('moje.gwo PROD — Centrum testów');
+  state.schedule.enabled=true;await page.evaluate(()=>window.refreshMojeGwo());
   await expect(page.locator('#panel-test-status')).toContainText('Kolejny test:');
   await expect(page.locator('#schedule-form legend').first()).toHaveText('1. Wybierz testy do uruchamiania');
   await expect(page.locator('#schedule-saved-scope')).toContainText('Zapisany zakres:');

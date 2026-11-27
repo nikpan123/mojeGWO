@@ -6,7 +6,7 @@ const args=process.argv.slice(2),index=args.indexOf('--env');
 const onlyIndex=args.indexOf('--only'),only=onlyIndex>=0?args[onlyIndex+1]:null;
 if(only&&!['auth','ui'].includes(only))throw new Error('Nieznany zestaw kontroli lokalnych.');
 const environments=only?['test']:index>=0?[parseEnvironment(args[index+1])]:['test','prod'];
-const groups=only?{test:[only==='ui'?'panel-ui':'auth']}:{test:['config','dashboard','load-testing','environment','panel-ui','inspect-teacher','access-cards'],prod:['prod-draft','local-schedule','mattermost']};
+const groups=only?{test:[only==='ui'?'panel-ui':'auth']}:{test:['config','dashboard','load-testing','environment','panel-ui','inspect-teacher','access-cards','stop-run'],prod:['prod-draft','local-schedule','mattermost']};
 
 // Run on a fresh copy of the code and examples. Local accounts, sessions,
 // enabled PROD settings and schedules must never enter installation checks.
@@ -18,11 +18,11 @@ function copySources(source,destination){
   if(entry.isSymbolicLink()||entry.name.endsWith('.local.json')||entry.name.startsWith('.env'))continue;
   const from=path.join(source,entry.name),to=path.join(destination,entry.name);
   if(entry.isDirectory())copySources(from,to);
-  else if(/\.(mjs|js|css|html|json|md|svg)$/.test(entry.name))fs.copyFileSync(from,to);
+  else if(/\.(mjs|js|css|html|json|md|svg|png)$/.test(entry.name))fs.copyFileSync(from,to);
  }
 }
 try{
- for(const directory of ['lib','scripts','dashboard','tests','checks','config'])copySources(path.join(root,directory),path.join(fixture,directory));
+ for(const directory of ['lib','scripts','dashboard','tests','checks','config','docs'])copySources(path.join(root,directory),path.join(fixture,directory));
  for(const file of ['package.json','playwright.config.mjs','README.md'])fs.copyFileSync(path.join(root,file),path.join(fixture,file));
  const env=Object.fromEntries(Object.entries(process.env).filter(([key])=>!/^(MOJE_GWO|GITLAB)_/i.test(key)));
  for(const environment of environments) {

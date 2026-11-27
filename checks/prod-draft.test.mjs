@@ -8,6 +8,20 @@ import {readCredentials,ensureSession} from '../lib/auth.mjs';
 import {scenarios} from '../lib/catalog.mjs';
 import {createDashboard} from '../dashboard/server.mjs';
 const draft=async()=>JSON.parse(await fs.readFile(new URL('../config/prod.example.json',import.meta.url),'utf8'));
+test('przycisk przy zegarze wyłącza harmonogram także w oczekiwaniu na termin',async()=>{
+ const dir=await fs.mkdtemp(path.join(tmpdir(),'gwo-stop-schedule-'));let server;
+ try{
+  const config=await draft();server=await createDashboard({dataDir:dir,settingsProvider:()=>config,checkReadiness:async()=>({ready:false,message:'Przykład'})});
+  await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
+  const origin='http://127.0.0.1:'+server.address().port,html=await(await fetch(origin)).text(),token=html.match(/name="health-token" content="([^"]+)"/)[1];
+  const post=(route,body)=>fetch(origin+route,{method:'POST',headers:{Origin:origin,'Content-Type':'application/json','X-Health-Token':token},body:JSON.stringify(body)});
+  const saved=await post('/api/schedule',{enabled:true,intervalMinutes:30,suites:['websites'],profileId:'default',revision:0});assert.equal(saved.status,200);
+  assert.equal((await post('/api/stop',{runId:null,scheduleRevision:0})).status,409);
+  const response=await post('/api/stop',{runId:null,scheduleRevision:1});assert.equal(response.status,202);
+  const state=await(await fetch(origin+'/api/state')).json();assert.equal(state.schedule.enabled,false);assert.equal(state.schedule.nextRunAt,null);assert.equal(state.running,false);
+  const stored=JSON.parse(await fs.readFile(path.join(dir,'schedule.json'),'utf8'));assert.equal(stored.enabled,false);assert.equal(stored.nextRunAt,null);
+ }finally{if(server)await new Promise(resolve=>server.close(resolve));await fs.rm(dir,{recursive:true,force:true});}
+});
 
 test('PROD pozostaje konfiguracją roboczą z pięcioma osobnymi scenariuszami',async()=>{
  const settings=validateSettings(await draft());

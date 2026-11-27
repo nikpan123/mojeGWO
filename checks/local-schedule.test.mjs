@@ -6,6 +6,19 @@ import path from 'node:path';
 import {createLocalSchedule,validateSchedule} from '../lib/local-schedule.mjs';
 const profiles=()=>({selectedId:'a',teachers:[{id:'a',enabled:true}]});
 const config={enabled:true,intervalMinutes:30,suites:['functional','services'],profileId:'a',revision:0};
+test('zatrzymanie harmonogramu wyłącza przyszłe terminy i kolejne zestawy',async()=>{
+ const dir=await fs.mkdtemp(path.join(os.tmpdir(),'moje-stop-cycle-'));let schedule,release,started;
+ const ready=new Promise(resolve=>started=resolve),calls=[];
+ try{
+  schedule=await createLocalSchedule({file:path.join(dir,'schedule.json'),profiles,isBusy:()=>false,startRun:async options=>{calls.push(options);return {id:'1'};},getRun:()=>{started();return new Promise(resolve=>release=resolve);},pollMs:1});
+  await schedule.save(config);const before=schedule.state();await schedule.runNow();await ready;
+  await schedule.stop(schedule.state().revision);release({id:'1',status:'STOPPED'});
+  for(let i=0;i<100&&schedule.state().running;i++)await new Promise(resolve=>setTimeout(resolve,5));
+  assert.equal(schedule.state().running,false);assert.equal(calls.length,1);
+  assert.equal(schedule.state().enabled,false);assert.equal(schedule.state().nextRunAt,null);assert.equal(schedule.state().revision,before.revision+1);
+  assert.ok(schedule.state().events.some(e=>e.type==='STOP'&&e.runId==='1'));assert.ok(!schedule.state().events.some(e=>e.type==='FAIL'));
+ }finally{schedule?.close();await fs.rm(dir,{recursive:true,force:true});}
+});
 async function fixture(fn){const dir=await fs.mkdtemp(path.join(os.tmpdir(),'moje-schedule-'));let clock=Date.now(),busy=false;const calls=[],file=path.join(dir,'schedule.json');let schedule;const dependencies={file,profiles,now:()=>clock,isBusy:()=>busy,startRun:async options=>{calls.push(options);return {id:String(calls.length)};},getRun:async id=>({id,status:id==='1'?'FAIL':'PASS'}),pollMs:1};try{schedule=await createLocalSchedule(dependencies);await fn({schedule,calls,file,dependencies,advance:n=>clock+=n,setBusy:b=>busy=b});}finally{schedule?.close();await fs.rm(dir,{recursive:true,force:true});}}
 test('odstęp, zestawy i aktywny nauczyciel są walidowane',()=>{for(const input of [{...config,intervalMinutes:0},{...config,intervalMinutes:1.5},{...config,suites:[]},{...config,profileId:'other'}])assert.throws(()=>validateSchedule(input,profiles()));});
 test('dostępność stron może zastąpić endpointy bez zmiany odstępu i nauczyciela',()=>{const next=validateSchedule({...config,suites:['functional','websites']},profiles());assert.deepEqual(next.suites,['functional','websites']);assert.equal(next.intervalMinutes,30);assert.equal(next.profileId,'a');});

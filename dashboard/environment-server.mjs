@@ -1,4 +1,5 @@
 import {loadSettings,saveLoadSettings,loadReadiness,validateLoad} from '../lib/load-testing.mjs';
+import {stopTestProcess} from '../lib/stop-test-process.mjs';
 import {existsSync} from 'node:fs';
 import {environment,dataRoot} from '../lib/environment.mjs';
 import {websiteReadiness} from '../lib/website-availability.mjs';
@@ -11,6 +12,7 @@ import {teacherController} from '../lib/teacher-controller.mjs';
 import {inspectTeacher} from '../lib/inspect-teacher.mjs';
 import http from 'node:http';
 import {renderPanel} from './panel-view.mjs';
+import {renderMaterialGuide} from './material-guide.mjs';
 import path from 'node:path';
 import fs from 'node:fs/promises';
 import { randomBytes, randomUUID } from 'node:crypto';
@@ -38,7 +40,7 @@ export async function readiness(settings=readSettings()) {
     return { ready: false, message: e.code === 'ENOENT' ? 'Brakuje zapisanej sesji nauczyciela lub bibliotek. Wykonaj kroki z instrukcji.' : e.message };
   }
 }
-export async function createDashboard({ dataDir = dataRoot, checkReadiness = readiness, settingsProvider=readSettings, launchProcess=spawn, profileStore, credentialVault, inspector=inspectTeacher, serviceConfigRoot=root, notificationService, loadEngineExists=()=>existsSync(path.join(root,'tools','k6.exe')) } = {}) {
+export async function createDashboard({ dataDir = dataRoot, checkReadiness = readiness, settingsProvider=readSettings, launchProcess=spawn, terminateProcess=stopTestProcess, profileStore, credentialVault, inspector=inspectTeacher, serviceConfigRoot=root, notificationService, loadEngineExists=()=>existsSync(path.join(root,'tools','k6.exe')) } = {}) {
   const token = randomBytes(24).toString('hex');
   let active = null,activeRun=null;
   let launching = false,configuring=false;
@@ -88,6 +90,22 @@ export async function createDashboard({ dataDir = dataRoot, checkReadiness = rea
         if(url.pathname==='/api/schedule'||url.pathname==='/api/schedule/run'||url.pathname==='/api/schedule/events/clear'){
           let body='';for await(const chunk of req){body+=chunk;if(Buffer.byteLength(body)>4096)return json(413,{error:'Za dużo danych.'});}
           try{const input=body?JSON.parse(body):{};const schedule=url.pathname.endsWith('/clear')?await scheduler.clearEvents():url.pathname.endsWith('/run')?await scheduler.runNow():await scheduler.save(input);return json(200,{schedule});}catch(e){return json(400,{error:e.message});}
+        }
+        if(url.pathname==='/api/stop'){
+          let body='';for await(const chunk of req){body+=chunk;if(Buffer.byteLength(body)>1024)return json(413,{error:'Za dużo danych.'});}
+          let input;try{input=JSON.parse(body);}catch{return json(400,{error:'Niepoprawne dane zatrzymania.'});}
+          const child=active,run=activeRun;
+          const schedule=scheduler.state(),stopSchedule=environment==='prod'&&(schedule.enabled||schedule.running);
+          if(launching||configuring)return json(409,{error:'Trwa rozpoczynanie testu lub zapis konfiguracji. Spróbuj ponownie za chwilę.'});
+          if(child?(!run||run.status!=='RUNNING'||input?.runId!==run.id):input?.runId!=null||!stopSchedule)return json(409,{error:'Stan przebiegu zmienił się. Odśwież panel.'});
+          if(run?.stopRequested)return json(202,{stopping:true});
+          if(stopSchedule&&input?.scheduleRevision!==schedule.revision)return json(409,{error:'Harmonogram zmienił się. Odśwież panel.'});
+          if(run)run.stopRequested=true;
+          try{
+            if(stopSchedule)await scheduler.stop(input.scheduleRevision);
+            if(child){if(run.suite==='load')await fs.writeFile(path.join(dataDir,'runs',run.id,'stop.request'),'stop');else await terminateProcess(child);}
+            return json(202,{stopping:!!child,schedule:stopSchedule?scheduler.state():undefined});
+          }catch{if(run&&activeRun===run)delete run.stopRequested;return json(500,{error:'Nie udało się zatrzymać testu. Spróbuj ponownie.'});}
         }
         if(url.pathname==='/api/load-stop'){
           if(!activeRun||activeRun.suite!=='load')return json(409,{error:'Brak aktywnego obciążenia.'});
@@ -150,7 +168,7 @@ export async function createDashboard({ dataDir = dataRoot, checkReadiness = rea
         await fs.writeFile(path.join(runDir,'config.json'),JSON.stringify(runSettings,null,2));
         await record(run);
         const child = launchProcess(process.execPath, load?[path.join(root,'scripts','run-load.mjs')]:[path.join(root, 'node_modules/playwright/cli.js'), 'test', ...(options.headed?['--headed']:[]), '--output', path.join(runDir, 'artifacts')], {
-          cwd: root, windowsHide: true, stdio: 'ignore',
+          cwd: root, windowsHide: true, stdio: 'ignore',detached:process.platform!=='win32',
           env: { ...process.env, MOJE_GWO_ENV:environment, GWO_LOAD_PARENT_PID:String(process.pid), MOJE_GWO_SUITE:options.suite||'functional', MOJE_GWO_RUN_CONFIG:path.join(runDir,'config.json'), MOJE_GWO_PROFILE_ID:anonymous?'':runSettings.profileId, MOJE_GWO_LIVE_DIR:path.join(runDir,'live'), MOJE_GWO_PREVIEW:anonymous||options.preview===false?'0':'1', MOJE_GWO_SLOW_MO:String(options.speed||0), MOJE_GWO_FORCE_LOGIN:options.forceLogin===true?'1':'', PLAYWRIGHT_HTML_OPEN: 'never', PLAYWRIGHT_HTML_OUTPUT_DIR: path.join(runDir, 'report'), PLAYWRIGHT_JSON_OUTPUT_FILE: path.join(runDir, 'results.json'), PLAYWRIGHT_JUNIT_OUTPUT_FILE: path.join(runDir, 'junit.xml') }
         });
         active = child;activeRun=run;
@@ -163,11 +181,12 @@ export async function createDashboard({ dataDir = dataRoot, checkReadiness = rea
             const stats = result?.stats || {};
             run.counts = { passed: stats.expected || 0, failed: stats.unexpected || 0, skipped: stats.skipped || 0, flaky: stats.flaky || 0 };
             run.status = code === 0 && run.counts.passed === run.expectedCount && !run.counts.failed && !run.counts.skipped && !run.counts.flaky ? 'PASS' : 'FAIL';
+            if(run.stopRequested){run.status='STOPPED';run.message='Test zatrzymany przez użytkownika.';}
             run.finishedAt = new Date().toISOString();
             try {
               if(anonymous)throw new Error('NO_TEACHER_LOGIN');
               const authSummary=JSON.parse(await fs.readFile(path.join(path.dirname(path.resolve(root,runSettings.sessionFile)),'last-auth.json'),'utf8'));
-              if(authSummary.startedAt>=run.startedAt){run.authentication=authSummary;if(authSummary.status==='FAIL')run.message=authSummary.message;}
+              if(authSummary.startedAt>=run.startedAt){run.authentication=authSummary;if(authSummary.status==='FAIL'&&!run.stopRequested)run.message=authSummary.message;}
             } catch {}
             try { await fs.access(path.join(runDir, 'report/index.html')); run.report = '/report/' + id + '/'; } catch {}
             await record(run);
@@ -182,7 +201,7 @@ export async function createDashboard({ dataDir = dataRoot, checkReadiness = rea
         } finally { launching = false; }
       }
       if (req.method !== 'GET') return json(405, { error: 'Niedozwolona metoda.' });
-      if (url.pathname === '/api/state') return json(200, { ...(await checkReadiness(profiles.settings())), scenarios: scenarios(profiles.settings(),{healthConfig:loadHealthConfig(serviceConfigRoot,profiles.baseProvider().environment)}), serviceHealth:{config:loadHealthConfig(serviceConfigRoot,profiles.baseProvider().environment),...healthReadiness(loadHealthConfig(serviceConfigRoot,profiles.baseProvider().environment),profiles.baseProvider()),expectedCount:9}, environment, websiteAvailability:websiteReadiness(profiles.baseProvider()), loadTesting:{config:loadSettings(dataDir),engineInstalled:loadEngineExists(),...loadReadiness(loadSettings(dataDir),profiles.baseProvider(),profiles.read(),loadEngineExists()),running:activeRun?.suite==='load'}, expectedCount:scenarioCount(profiles.settings()), profiles:await teachers.state(), schedule:await scheduleState(), notifications:await notifications.state(), history: await history(), running: !!active || launching, busy:configuring });
+      if (url.pathname === '/api/state') return json(200, { ...(await checkReadiness(profiles.settings())), scenarios: scenarios(profiles.settings(),{healthConfig:loadHealthConfig(serviceConfigRoot,profiles.baseProvider().environment)}), serviceHealth:{config:loadHealthConfig(serviceConfigRoot,profiles.baseProvider().environment),...healthReadiness(loadHealthConfig(serviceConfigRoot,profiles.baseProvider().environment),profiles.baseProvider()),expectedCount:9}, environment, websiteAvailability:websiteReadiness(profiles.baseProvider()), loadTesting:{config:loadSettings(dataDir),engineInstalled:loadEngineExists(),...loadReadiness(loadSettings(dataDir),profiles.baseProvider(),profiles.read(),loadEngineExists()),running:activeRun?.suite==='load'}, expectedCount:scenarioCount(profiles.settings()), profiles:await teachers.state(), schedule:await scheduleState(), notifications:await notifications.state(), history: await history(), running: !!active || launching, activeRunId:activeRun?.id||null, stopping:activeRun?.stopRequested===true, busy:configuring });
       const asset=url.pathname.match(/^\/api\/runs\/([a-f0-9-]{36})\/(events|preview)$/);
       if(asset){
         if(!(await history()).some(run=>run.id===asset[1]))return json(404,{error:'Nie znaleziono przebiegu.'});
@@ -212,6 +231,13 @@ export async function createDashboard({ dataDir = dataRoot, checkReadiness = rea
         res.writeHead(200, { 'Content-Type': 'text/javascript; charset=utf-8', 'Cache-Control': 'no-store' });
         return res.end(await fs.readFile(new URL('./panel.js', import.meta.url)));
       }
+      if(url.pathname==='/instruction/materials'){
+        const guide=await fs.readFile(path.join(root,'docs/INSTRUKCJA_KONFIGURACJI.md'),'utf8');
+        res.writeHead(200,{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-store','Content-Security-Policy':"default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; object-src 'none'; base-uri 'none'"});
+        return res.end(renderMaterialGuide(guide,environment));
+      }
+      const guideImage=url.pathname.match(/^\/instruction\/images\/([a-z0-9-]+\.png)$/);
+      if(guideImage){const bytes=await fs.readFile(path.join(root,'docs/images',guideImage[1]));res.writeHead(200,{'Content-Type':'image/png','Cache-Control':'no-store'});return res.end(bytes);}
       if (url.pathname === '/instruction') {
         res.writeHead(200, { 'Content-Type': 'text/plain; charset=utf-8' });
         return res.end(await fs.readFile(path.join(root, 'README.md')));

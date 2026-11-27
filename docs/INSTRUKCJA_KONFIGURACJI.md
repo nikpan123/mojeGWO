@@ -10,6 +10,7 @@ Instrukcja prowadzi od pobrania projektu do pierwszego testu oraz harmonogramu. 
 4. [Uruchomienie panelu](#4-uruchomienie-panelu)
 5. [Nauczyciel i odczyt jego dostępów](#5-nauczyciel-i-odczyt-jego-dostępów)
 6. [Wybór aplikacji i multipodręczników](#6-wybór-aplikacji-i-multipodręczników)
+   - [Pola materiału: co wpisać, skąd wziąć dane i przykłady](#jak-wypełnić-pola-materiału)
 7. [Pierwsze uruchomienie i wyniki](#7-pierwsze-uruchomienie-i-wyniki)
 8. [Harmonogram](#8-harmonogram)
 9. [Pozostałe zestawy i Mattermost](#9-pozostałe-zestawy-i-mattermost)
@@ -180,6 +181,8 @@ Na przygotowanym komputerze skrót **Centrum-testow** uruchamia Centrum oraz wsp
 
 W nagłówku kliknij **TEST** albo **PROD**. Aktywne środowisko jest wyróżnione. Konta i materiały skonfiguruj osobno dla każdego środowiska. Przyciskami **Jasny / Ciemny / Systemowy** w prawym górnym rogu zmienisz motyw; panel zapamiętuje wybór.
 
+Zegar u góry pokazuje czas polski. Pod nim widnieje następny termin, jeśli harmonogram jest włączony. Podczas przebiegu pojawia się **Testy w toku**, a tytuł karty przeglądarki także pokazuje tę informację. Kliknięcie statusu otwiera przebieg i logi. **Zatrzymaj harmonogram** wyłącza cały harmonogram, przyszłe terminy oraz pozostałe zestawy cyklu, a także kończy bieżący przebieg wraz z jego procesami przeglądarki. Gdy harmonogram jest nieaktywny lub jesteś na TEST, podczas ręcznego przebiegu przycisk ma nazwę **Zatrzymaj test**. W historii ma on wynik **Zatrzymany**, a nie **Niezaliczony**. Aby wznowić automatyczne testy, włącz harmonogram ponownie i zapisz ustawienia. Przerwany przebieg może nie mieć kompletnego raportu HTML.
+
 ![Wybór środowiska i motywu panelu](images/wybor-srodowiska-i-motywu.png)
 
 Przy uruchomieniu z PowerShell pozostaw proces panelu działający. Zakończysz go przez **Ctrl+C**. Nie uruchamiaj równolegle kilku kopii panelu z tym samym aktywnym harmonogramem.
@@ -219,6 +222,60 @@ Przy wybranym, aktywnym dostępie nauczycielskim kliknij **Dodaj do kontroli**. 
 | Kompozytor — dostęp i lista zestawów | Rodzaj **Aplikacja**, właściwy adres i nazwa klasy lub biblioteki, np. `7`. | Otwarcie wskazanej klasy/biblioteki i pojawienie się zakładki **Twoje zestawy**. |
 | Karty pracy — katalog zadań klas 1–3 | Rodzaj **Aplikacja** i adres katalogu danego środowiska. | Katalog i obrazy zadań w widoku komponowania; bez zapisywania zestawu. |
 | Pełny test według istniejącego wzorca | Wzorzec pasujący do konkretnej aplikacji. | Czynność i rezultat z wcześniej przygotowanego wzorca. |
+
+<!-- material-fields:start -->
+### Jak wypełnić pola materiału
+
+Najłatwiej zacząć od **Pobierz dostępy z konta**, a następnie **Dodaj do kontroli** przy właściwym materiale. Panel przepisze pełną nazwę i identyfikator dostępu. Przy edycji kliknij **Edytuj** w tabeli **Materiały do sprawdzania**. Instrukcję tych pól otworzysz także przez **Jak wypełnić pola?** na stronie nauczycieli i w formularzu materiału.
+
+| Pole | Co wpisać i skąd to wziąć | Przykładowa treść |
+| --- | --- | --- |
+| Pełna nazwa materiału | Zachowaj pełną nazwę z listy **Materiały odczytane z konta**. Skrócony napis z kafelka nie wystarcza; nie usuwaj informacji o klasie, wydaniu ani wersji nauczycielskiej. Najlepiej użyć przycisku **Dodaj do kontroli**. | `Matematyka z plusem 7. Multipodręcznik. Wyd. na rok 2026/2027. Wersja nauczycielska` — tylko jeśli dokładnie taka nazwa widnieje na Twoim koncie. |
+| Rodzaj | Ustal na podstawie zakładki w portalu: **Multipodręczniki / Multićwiczenia** albo **Aplikacje**. | `Multipodręcznik / multićwiczenia` dla podręcznika; `Aplikacja` dla Kompozytora i Kart pracy. |
+| Sposób sprawdzania | Dopasuj do tego, co otwiera materiał. Czytnik służy do stron podręcznika, Kompozytor do klas i zestawów, Karty pracy do katalogu zadań klas 1–3. **Tylko obecność i ważność dostępu** wybierz, jeśli nie chcesz otwierać materiału. | `Czytnik — dostęp i zmiana stron` dla multipodręcznika. |
+| Klasa lub biblioteka wewnątrz Kompozytora | Pole pokazuje się dla sposobu **Kompozytor**. Otwórz tę aplikację ręcznie i przepisz numer z kafelka pod nagłówkiem **Klasy** albo nazwę biblioteki widoczną wewnątrz aplikacji. | `6` — sam numer, jeśli kafelek pokazuje 6. Nie wpisuj tutaj `Nauczanie wielopoziomowe`. |
+| Wzorzec aplikacji | Pole pokazuje się tylko przy **Pełny test według istniejącego wzorca**. Wybierz z listy wcześniej skonfigurowany wzorzec tej samej aplikacji i czynności. Wzorce pochodzą z bazowej konfiguracji projektu. Jeśli nie ma właściwego, użyj dedykowanego sposobu albo kontroli samego dostępu. | Wzorzec Kompozytora matematyki wyłącznie dla tego Kompozytora; nie wybieraj podobnej aplikacji z innego przedmiotu. |
+| Grupa na stronie „Moje dostępy” | To nagłówek grupujący kafelki w portalu nauczyciela, przed otwarciem aplikacji. Przepisz go dokładnie z zakładki z dostępami. Jeśli materiał nie wymaga rozwijania grupy, pole może zostać puste. | `Szkoła podstawowa kl. 5` dla podręcznika albo `Nauczanie wielopoziomowe` dla aplikacji pod takim nagłówkiem. |
+| Adres aplikacji lub czytnika | Otwórz materiał z kafelka i sprawdź pasek adresu. Wpisuj tylko adres HTTPS właściwej aplikacji w tym środowisku, bez `?` i parametrów, bez `#`, tokenów ani danych sesji. Jeśli adres wejścia nie jest potrzebny, pozostaw puste. Nie kopiuj adresu logowania ani adresu raportu. | PROD: `https://kompozytorklasowek.apps.gwo.pl/matematyka`; TEST: `https://kompozytorklasowek.apps.gwotest.pl/matematyka`. |
+| Adres katalogu Kart pracy | Dla sposobu **Karty pracy — katalog zadań klas 1–3** panel uzupełnia go automatycznie. Zachowaj dokładną ścieżkę; nie zastępuj jej samą domeną aplikacji. | PROD: `https://kartypracy.apps.gwo.pl/25/EW/1`; TEST: `https://kartypracy.apps.gwotest.pl/25/EW/1`. |
+| Nazwa widoczna na karcie, jeżeli skrócona | Rozwiń **Nazwa na karcie i opis**. Opcjonalnie przepisz skrócony napis z kafelka w portalu, zachowując wielokropek. Nie zastępuje on pełnej nazwy ani identyfikatora z odczytu konta. | `To nasz świat. Geografia. Klasa 5. Wersja nau...` — jeśli właśnie tak wygląda Twój kafelek. |
+| Opis kontroli | W tym samym rozwijanym bloku możesz wpisać krótką notatkę opisującą cel. Nie steruje ona czynnościami testu; wybiera je **Sposób sprawdzania**. Dla Kart pracy panel zapisuje własny opis tego sposobu. | `Otwarcie podręcznika i przejście do kolejnej rozkładówki.` |
+| Zezwalam na automatyczną akceptację rozpoznanego regulaminu | Opcja dotyczy obsługiwanych aplikacji i rozpoznanego regulaminu. Zaznacz tylko, jeśli chcesz upoważnić test do jego akceptacji. Nie jest to zgoda na dowolne okna i regulaminy. W Kompozytorze matematyki dopasowanie wymaga właściwego adresu aplikacji. | Zaznaczone dla uzgodnionego testu Kompozytora matematyki; bez zgody pojawiający się regulamin może zatrzymać test. |
+| Uwzględniaj w testach | Zaznacz, aby materiał brał udział w ręcznych i zaplanowanych testach tego profilu. Odznaczenie zachowuje konfigurację, ale pomija materiał przy kolejnych uruchomieniach. | Zaznaczone dla materiału, który ma być regularnie sprawdzany. |
+
+**Dwie różne lokalizacje:** „Grupa” pochodzi z portalu **Moje dostępy**, a „Klasa lub biblioteka” z otwartej aplikacji **Kompozytor**. Dla Kompozytora matematyki poprawny przykład to grupa `Nauczanie wielopoziomowe` i klasa `6`. Zamiana tych wartości powoduje szukanie nieistniejącej biblioteki.
+
+![Formularz multipodręcznika — pełna nazwa, rodzaj i sposób sprawdzania](images/kontrola-materialu.png)
+
+![Formularz Kompozytora — klasa wybierana wewnątrz aplikacji](images/konfiguracja-kompozytora.png)
+
+#### Przykład: multipodręcznik
+
+1. W odczytanych dostępach wybierz właściwy podręcznik i kliknij **Dodaj do kontroli**. Zachowaj pełną nazwę pobraną przez panel.
+2. Ustaw rodzaj **Multipodręcznik / multićwiczenia** i sposób **Czytnik — dostęp i zmiana stron**.
+3. W grupie wpisz nagłówek z portalu, np. `Szkoła podstawowa kl. 5`. Adres pozostaw pusty, jeśli czytnik jest prawidłowo uruchamiany z kafelka.
+4. Pozostaw **Uwzględniaj w testach** i zapisz.
+
+#### Przykład: Kompozytor matematyki, klasa 6
+
+1. Z odczytanych dostępów wybierz właściwy Kompozytor matematyki. Przykładowa nazwa to `Kompozytor klasówek. Mat. Szkoła Podstawowa`; użyj dokładnej nazwy ze swojego konta.
+2. Ustaw rodzaj **Aplikacja** i sposób **Kompozytor — dostęp i lista zestawów**.
+3. W **Klasa lub biblioteka wewnątrz Kompozytora** wpisz `6`, jeśli chcesz sprawdzić widoczny w aplikacji kafelek klasy 6.
+4. W **Grupa na stronie „Moje dostępy”** wpisz `Nauczanie wielopoziomowe`, jeśli materiał znajduje się właśnie pod tym nagłówkiem w portalu.
+5. Na PROD wpisz adres `https://kompozytorklasowek.apps.gwo.pl/matematyka`; na TEST użyj `https://kompozytorklasowek.apps.gwotest.pl/matematyka`.
+6. Jeśli upoważniasz test do akceptacji rozpoznanego regulaminu, zaznacz odpowiednią zgodę. Pozostaw **Uwzględniaj w testach** i zapisz.
+
+#### Przykład: Karty pracy, klasy 1–3
+
+1. Dodaj właściwy dostęp do aplikacji Kart pracy z katalogu nauczyciela, zachowując jego pełną nazwę.
+2. Wybierz rodzaj **Aplikacja** i sposób **Karty pracy — katalog zadań klas 1–3**.
+3. Zachowaj automatycznie wpisany adres kończący się `/25/EW/1`. Pole klasy Kompozytora nie dotyczy tego sposobu.
+4. Grupę przepisz z portalu, jeśli jest potrzebna. Zgodę na rozpoznany regulamin zaznacz tylko przy swoim upoważnieniu; następnie zapisz materiał.
+
+#### Gdy nie wiesz, co wpisać
+
+Najpierw sprawdź ręcznie ten sam materiał na tym samym koncie i środowisku. Jeśli nie ma klasy 6, wybierz numer rzeczywiście dostępny w Kompozytorze. Jeśli aplikacja nie pasuje do żadnego obsługiwanego sposobu, wybierz **Tylko obecność i ważność dostępu** lub poproś o przygotowanie właściwego wzorca. Nie zgaduj numeru dostępu, pełnej nazwy ani adresów aplikacji. Przed ręcznym logowaniem zaczekaj na koniec testu lub użyj przycisku zatrzymania przy zegarze.
+<!-- material-fields:end -->
 
 ### Multipodręcznik
 
