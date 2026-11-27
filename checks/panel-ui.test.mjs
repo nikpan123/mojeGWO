@@ -133,9 +133,11 @@ test('dziennik wyróżnia wyniki, filtruje błędy i czyści tylko wpisy',async(
   await page.route('**/prod/api/stop',route=>{assert.equal(route.request().method(),'POST');const input=route.request().postDataJSON();assert.equal(input.runId,state.activeRunId);assert.equal(input.scheduleRevision,state.schedule.revision);stopCalls++;state.stopping=true;state.schedule.enabled=false;state.schedule.revision++;return route.fulfill({json:{stopping:true,schedule:state.schedule}});});
   await page.goto(origin+'/prod/#schedule');
   await expect(page.locator('#panel-test-status')).toHaveText('Kolejny test: 27.11.2026, 10:30:00');
+  await expect(page.locator('#panel-test-start')).toBeHidden();
   await expect(page.locator('#panel-stop-test')).toHaveText('Zatrzymaj harmonogram');await expect(page.locator('#panel-stop-test')).toBeEnabled();
   state.running=true;state.activeRunId='bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb';state.history=[{id:state.activeRunId,status:'RUNNING',suite:'functional',startedAt:'2026-11-27T09:29:00Z',expectedCount:5}];
   await page.evaluate(()=>window.refreshMojeGwo());await expect(page.locator('#panel-test-status')).toHaveText('Testy w toku · Konto i materiały');
+  await expect(page.locator('#panel-test-start')).toHaveText('Rozpoczęto o 10:29:00');await expect(page.locator('#panel-test-start')).toBeVisible();
   await expect(page.locator('#panel-test-status')).toHaveAttribute('href','#live');
   await expect(page).toHaveTitle('Testy w toku — moje.gwo PROD — Centrum testów');
   await expect(page.locator('#panel-stop-test')).toBeEnabled();await page.locator('#panel-stop-test').click();
@@ -143,6 +145,7 @@ test('dziennik wyróżnia wyniki, filtruje błędy i czyści tylko wpisy',async(
   await expect(page).toHaveTitle('Zatrzymywanie testów — moje.gwo PROD — Centrum testów');assert.equal(stopCalls,1);
   state.running=false;state.stopping=false;state.activeRunId=null;state.history=[];await page.evaluate(()=>window.refreshMojeGwo());
   await expect(page.locator('#panel-stop-test')).toBeHidden();await expect(page).toHaveTitle('moje.gwo PROD — Centrum testów');
+  await expect(page.locator('#panel-test-start')).toBeHidden();
   state.schedule.enabled=true;await page.evaluate(()=>window.refreshMojeGwo());
   await expect(page.locator('#panel-test-status')).toContainText('Kolejny test:');
   await expect(page.locator('#schedule-form legend').first()).toHaveText('1. Wybierz testy do uruchamiania');

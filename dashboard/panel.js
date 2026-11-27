@@ -31,9 +31,14 @@ function setText(element,text){if(element.textContent!==text)element.textContent
 function tickClock(){if(!$('#panel-clock-time'))return;const now=new Date();$('#panel-clock-time').dateTime=now.toISOString();setText($('#panel-clock-time'),clockTime.format(now));setText($('#panel-clock-date'),clockDate.format(now));}
 tickClock();setInterval(tickClock,1000);
 function renderHeaderStatus(){
- const status=$('#panel-test-status'),run=state.history.find(run=>run.status==='RUNNING'),schedule=state.schedule;
+ const status=$('#panel-test-status'),run=state.history.find(run=>run.status==='RUNNING'&&(!state.activeRunId||run.id===state.activeRunId)),schedule=state.schedule;
  if(!status)return;
  const running=state.running||schedule?.running;
+ let start=$('#panel-test-start');
+ if(!start){start=document.createElement('span');start.id='panel-test-start';start.hidden=true;status.insertAdjacentElement('afterend',start);}
+ const started=run?.startedAt?new Date(run.startedAt):null;
+ start.hidden=!running||!started||!Number.isFinite(started.getTime());
+ if(!start.hidden){setText(start,'Rozpoczęto o '+clockTime.format(started));start.title=nextTestTime.format(started);}
  document.title=running?(state.stopping?'Zatrzymywanie testów':'Testy w toku')+' — '+normalTitle:normalTitle;
  const stop=$('#panel-stop-test');
  const stopSchedule=document.body.dataset.environment==='prod'&&(schedule?.enabled||schedule?.running);
@@ -116,7 +121,7 @@ async function refresh(){
   choice.value=selected;
   $('#history').innerHTML=state.history.map(r=>`<tr><td>${esc(new Date(r.startedAt).toLocaleString('pl-PL'))}</td><td>${esc(r.profileLabel||r.accountEmail||'Dotychczasowy profil')}</td><td class="${r.status==='PASS'?'pass':r.status==='FAIL'?'fail':''}">${esc(names[r.status]||r.status)}</td><td>${r.counts?`${r.counts.passed} / ${r.expectedCount||5}`:'—'}</td><td><button data-live="${esc(r.id)}">Przebieg i logi</button>${/^\/report\/[a-f0-9-]{36}\/$/.test(r.report||'')?`<a href="${window.mojeGwoURL(r.report)}" target="_blank" rel="noopener">Raport ↗</a>`:''}</td></tr>`).join('')||'<tr><td colspan="5">Nie wykonano jeszcze testów.</td></tr>';
   await live();
- }catch(e){$('#message').textContent=e.message;const status=$('#panel-test-status');if(status){setText(status,'Nie udało się odświeżyć stanu testów');status.classList.remove('is-running');}}finally{refreshing=false;}
+ }catch(e){$('#message').textContent=e.message;const status=$('#panel-test-status');if(status){setText(status,'Nie udało się odświeżyć stanu testów');status.classList.remove('is-running');$('#panel-test-start')?.setAttribute('hidden','');}}finally{refreshing=false;}
 }
 $('#run').addEventListener('click',async()=>{
  $('#run').disabled=true;
