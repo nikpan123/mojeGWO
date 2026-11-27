@@ -53,4 +53,15 @@ Bez parametru środowiska wybierany jest TEST. Przed testami przeglądarkowymi s
 
 W panelu **PROD → Harmonogram** wybierz odstęp, zestawy i nauczyciela, włącz automatyczne wykonywanie i zapisz. Komputer i panel muszą działać; samą kartę przeglądarki można zamknąć. Zestawy wykonują się kolejno, a zajęty termin jest pomijany. Harmonogram można wyłączyć w tym samym widoku. Testy obciążeniowe nie są uruchamiane z harmonogramu.
 
-Historia i raporty są dostępne w panelu, osobno dla TEST i PROD. Opcjonalne powiadomienia Mattermost konfiguruje się w panelu PROD; webhook zapisuje się wyłącznie w `.env.prod` jako `MOJE_GWO_MATTERMOST_WEBHOOK_URL`.
+Historia i raporty są dostępne w panelu, osobno dla TEST i PROD.
+
+## Powiadomienia Mattermost
+
+Panel PROD może wysyłać powiadomienia po **niezaliczonych przebiegach**, uruchamianych ręcznie z panelu lub przez harmonogram. Wiadomość zawiera nazwę zestawu, liczbę zaliczonych i niezaliczonych kontroli oraz link do lokalnego raportu.
+
+1. W Mattermost utwórz **Incoming Webhook** dla wybranego kanału.
+2. W lokalnym pliku `.env.prod` ustaw `MOJE_GWO_MATTERMOST_WEBHOOK_URL='adres_webhooka'`. Nie dodawaj tego pliku do Git.
+3. W panelu **PROD → Powiadomienia** opcjonalnie wpisz swój login, np. `@imie.nazwisko`, zaznacz powiadamianie i zapisz ustawienia.
+4. Przyciskiem **Wyślij wiadomość kontrolną** sprawdź połączenie. W tym widoku można też wyłączyć powiadomienia i sprawdzić wynik ostatniej wysyłki.
+
+Powiadomienia są domyślnie wyłączone. Link do raportu działa tylko na komputerze uruchamiającym panel. Hasła i sesje nie są wysyłane w wiadomościach.
