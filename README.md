@@ -25,6 +25,8 @@ npm.cmd run panel
 
 Otwórz adres wyświetlony w terminalu. Panel próbuje portu **4182**, następnie **4184**, a w razie konfliktu wybiera inny wolny port. W panelu dodawaj nauczycieli, pobieraj ich dostępy i wybieraj materiały do testów.
 
+W prawym górnym rogu wybierz **Motyw: Jasny / Ciemny / Systemowy**. Panel zapamiętuje wybór i korzysta z tego samego ustawienia co lokalne Centrum testów.
+
 ## Technologie i zakres testów
 
 - **Node.js / JavaScript (ES Modules)** — lokalny serwer HTTP, panel i obsługa środowisk.
@@ -102,12 +104,24 @@ Regulamin może zostać zaakceptowany automatycznie tylko przy zapisanej zgodzie
 
 ## Harmonogram
 
-W panelu **PROD → Harmonogram** wybierz odstęp, zestawy i nauczyciela, włącz automatyczne wykonywanie i zapisz. Komputer i panel muszą działać; samą kartę przeglądarki można zamknąć. Zestawy wykonują się kolejno, a zajęty termin jest pomijany. Harmonogram można wyłączyć w tym samym widoku. Testy obciążeniowe nie są uruchamiane z harmonogramu.
+W panelu **PROD → Harmonogram**:
+
+1. Zaznacz testy: **Konto nauczyciela i materiały**, **Dostępność stron** albo oba zestawy. Opisy przy wyborze wyjaśniają ich zakres.
+2. Dla testów konta wybierz nauczyciela. Panel pokaże jego zakres i liczbę kontroli. Same testy dostępności stron nie wymagają konta.
+3. Ustaw odstęp, zaznacz automatyczne uruchamianie i kliknij **Zapisz wybór i harmonogram**. Podsumowanie rozróżnia zapisany zakres i zmiany oczekujące na zapis.
+
+Komputer i panel muszą działać; samą kartę przeglądarki można zamknąć. Wybrane zestawy wykonują się kolejno, a zajęty termin jest pomijany. Harmonogram można wyłączyć w tym samym widoku. Testy obciążeniowe nie są uruchamiane z harmonogramu.
 
 Dziennik oznacza zaliczone testy na zielono, a niezaliczone i błędy na czerwono. Można filtrować wyniki oraz użyć **Wyczyść dziennik** — raporty, historia testów i ustawienia pozostają zachowane.
 
+Przy wyniku zestawu konta widoczna jest nazwa nauczyciela i lista materiałów objętych przebiegiem wraz z zakresem kontroli. Lista pochodzi z zapisanej konfiguracji tego uruchomienia; późniejsza edycja profilu jej nie zmienia. Szczegółowe wyniki kontroli są w raporcie.
+
 <details>
 <summary>Przykładowy dziennik harmonogramu</summary>
+
+![Wybór testów i nauczyciela w harmonogramie](docs/images/harmonogram-wybor-testow.png)
+
+![Harmonogram w ciemnym motywie](docs/images/harmonogram-ciemny.png)
 
 ![Kolorowe wyniki, filtry i czyszczenie dziennika](docs/images/dziennik-harmonogramu.png)
 

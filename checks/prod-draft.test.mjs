@@ -18,6 +18,21 @@ test('PROD pozostaje konfiguracją roboczą z pięcioma osobnymi scenariuszami',
  assert.ok(rows.every(row=>row.project==='moje-gwo-prod'&&row.id.startsWith('moje-gwo-prod:')));
  assert.throws(()=>assertRunnable(settings),error=>error.code==='PROD_DISABLED');
 });
+
+test('dziennik odtwarza materiały z konfiguracji przebiegu zamiast bieżącego profilu',async()=>{
+ const directory=await fs.mkdtemp(path.join(tmpdir(),'mojegwo-scope-')),runId='aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';let server;
+ try{
+  const config=await draft();config.accountDisplayName='Aktualny nauczyciel';config.resources=[{id:'new',title:'Nowy materiał',kind:'aplikacja'}];
+  await fs.mkdir(path.join(directory,'runs',runId),{recursive:true});
+  await fs.writeFile(path.join(directory,'runs',runId,'config.json'),JSON.stringify({environment:'prod',profileLabel:'Nauczyciel z przebiegu',resources:[{id:'old',title:'Podręcznik z przebiegu',kind:'multipodrecznik',checkMode:'functional'}],privateValue:'dummy-private-do-not-return'}));
+  await fs.writeFile(path.join(directory,'schedule.json'),JSON.stringify({enabled:false,intervalMinutes:30,suites:['functional'],profileId:'default',revision:0,nextRunAt:null,events:[{type:'PASS',suite:'functional',runId,at:'2026-11-27T07:00:00Z',message:'Zakończono zestaw.'}]}));
+  server=await createDashboard({dataDir:directory,settingsProvider:()=>config,checkReadiness:async()=>({ready:false,message:'Przykład'})});
+  await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
+  const state=await(await fetch('http://127.0.0.1:'+server.address().port+'/api/state')).json(),event=state.schedule.events[0];
+  assert.equal(event.profileLabel,'Nauczyciel z przebiegu');assert.equal(event.materials[0].title,'Podręcznik z przebiegu');
+  assert.equal(event.materials[0].checkMode,'functional');assert.ok(!JSON.stringify(state).includes('dummy-private-do-not-return'));
+ }finally{if(server?.listening)await new Promise(resolve=>server.close(resolve));await fs.rm(directory,{recursive:true,force:true});}
+});
 test('dane TEST nie są używane jako fallback produkcji',async()=>{
  const missingFile=path.join(tmpdir(),'mojegwo-prod-env-never-created-'+Date.now());
  const env={GITLAB_USERNAME:'dummy-test',GITLAB_PASSWORD:'dummy-test',MOJE_GWO_USERNAME:'dummy-test',MOJE_GWO_PASSWORD:'dummy-test'};

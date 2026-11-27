@@ -15,6 +15,10 @@ test('panel przełącza TEST i PROD, zachowuje funkcje i działa na telefonie',a
   const page=await browser.newPage({viewport:{width:1440,height:1000}}),errors=[];
   page.on('pageerror',error=>errors.push(error.message));
   await page.goto(origin+'/test/');await expect(page.locator('#environment-choice')).toHaveValue('test');
+  await page.locator('#theme-mode').selectOption('dark');await expect(page.locator('html')).toHaveAttribute('data-theme','dark');
+  await page.reload();await expect(page.locator('#theme-mode')).toHaveValue('dark');
+  await expect(page.locator('html')).toHaveAttribute('data-theme','dark');
+  await page.locator('#theme-mode').selectOption('light');await expect(page.locator('html')).toHaveAttribute('data-theme','light');
   await expect(page.locator('#teacher-choice option')).toHaveCount(1);
   await page.locator('nav a[href="#load"]').click();await expect(page.locator('#load-form')).toBeVisible();
   await expect(page.locator('#load-run')).toBeDisabled();
@@ -40,12 +44,24 @@ test('dziennik wyróżnia wyniki, filtruje błędy i czyści tylko wpisy',async(
  try{
   const state=await(await fetch(origin+'/prod/api/state')).json();
   state.schedule.events=[{at:'2026-11-27T06:30:00Z',type:'PASS',suite:'functional',message:'Zakończono zestaw.',report:'/report/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa/',counts:{passed:5,failed:0}},{at:'2026-11-27T06:29:00Z',type:'FAIL',suite:'websites',message:'Zakończono zestaw.',counts:{passed:2,failed:1}},{at:'2026-11-27T06:28:00Z',type:'START',message:'Rozpoczęto cykl.'}];
+  state.schedule.events[0].profileLabel='Nauczyciel przykładowy';state.schedule.events[0].materials=[{id:'demo',title:'Matematyka. Klasa 5',kind:'multipodrecznik',checkMode:'functional'}];
   const installed=await fs.access(chromium.executablePath()).then(()=>true,()=>false);
   browser=await chromium.launch({headless:true,...(installed?{}:{channel:'msedge'})});const page=await browser.newPage();let clears=0;
   await page.route('**/prod/api/state',route=>route.fulfill({json:state}));
   await page.route('**/prod/api/schedule/events/clear',route=>{assert.equal(route.request().method(),'POST');clears++;state.schedule.events=[];return route.fulfill({json:{schedule:state.schedule}});});
   await page.goto(origin+'/prod/#schedule');
+  await expect(page.locator('#schedule-form legend').first()).toHaveText('1. Wybierz testy do uruchamiania');
+  await expect(page.locator('#schedule-saved-scope')).toContainText('Zapisany zakres:');
+  await page.locator('#schedule-form input[name="functional"]').uncheck();await expect(page.locator('#schedule-teacher-step')).toBeHidden();
+  await expect(page.locator('#schedule-selection')).toContainText('3 kontrole bez logowania');
+  await page.locator('#schedule-form input[name="websites"]').uncheck();await expect(page.locator('#schedule-selection')).toContainText('Nie wybrano testów');
+  await expect(page.locator('#schedule-form button[type="submit"]')).toBeDisabled();
+  await page.locator('#schedule-form input[name="functional"]').check();await expect(page.locator('#schedule-teacher-step')).toBeVisible();
+  await page.locator('#schedule-form input[name="websites"]').check();
   await expect(page.locator('.schedule-event')).toHaveCount(3);
+  await expect(page.locator('.schedule-materials')).toContainText('Matematyka. Klasa 5');
+  await expect(page.locator('.schedule-materials')).toContainText('dostęp i działanie');
+  await expect(page.locator('.schedule-event--pass')).toContainText('Nauczyciel przykładowy');
   assert.equal(await page.locator('.schedule-event--pass').evaluate(el=>getComputedStyle(el).backgroundColor),'rgb(240, 250, 243)');
   assert.equal(await page.locator('.schedule-event--fail').evaluate(el=>getComputedStyle(el).backgroundColor),'rgb(255, 243, 243)');
   await expect(page.locator('.schedule-event--pass a')).toHaveAttribute('href','/prod/report/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa/');

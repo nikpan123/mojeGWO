@@ -60,6 +60,18 @@ export async function createDashboard({ dataDir = dataRoot, checkReadiness = rea
     await fs.rename(temp, historyFile);
   }
   let scheduler;
+  const scopeCache=new Map();
+  const runScope=config=>({profileLabel:config.profileLabel||config.accountDisplayName||'',materials:(config.resources||[]).filter(resource=>resource.enabled!==false).map(resource=>({id:resource.id,title:resource.title,kind:resource.kind,checkMode:resource.checkMode==='access'?'access':'functional'}))});
+  async function scheduleState(){
+    const snapshot=scheduler.state();
+    snapshot.events=await Promise.all(snapshot.events.map(async event=>{
+      if(event.suite!=='functional'||Array.isArray(event.materials)||!/^[a-f0-9-]{36}$/.test(event.runId||''))return event;
+      if(!scopeCache.has(event.runId))scopeCache.set(event.runId,fs.readFile(path.join(dataDir,'runs',event.runId,'config.json'),'utf8').then(text=>{const config=JSON.parse(text);return config.environment===environment?runScope(config):null;}).catch(()=>null));
+      const scope=await scopeCache.get(event.runId);return scope?{...event,...scope}:event;
+    }));
+    const retained=new Set(snapshot.events.map(event=>event.runId));for(const id of scopeCache.keys())if(!retained.has(id))scopeCache.delete(id);
+    return snapshot;
+  }
   const server = http.createServer(async (req, res) => {
     const origin = 'http://127.0.0.1:' + server.address().port;
     const json = (status, body) => { res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' }); res.end(JSON.stringify(body)); };
@@ -133,6 +145,7 @@ export async function createDashboard({ dataDir = dataRoot, checkReadiness = rea
         const id = randomUUID();
         const run = { id, title: load?'Obciążenie TEST — '+runSettings.loadTest.users+' użytkowników':websites?'Dostępność stron PROD — 3 kontrole':services?'Endpointy healthcheck '+environment.toUpperCase()+' — 9 kontroli':'Smoke moje.gwo '+environment.toUpperCase()+' — '+runSettings.profileLabel+' — '+scenarioCount(runSettings)+' kontroli', suite:options.suite||'functional', profileId:anonymous?null:runSettings.profileId, profileLabel:websites?'Strony — bez logowania':services?'Usługi — bez logowania':runSettings.profileLabel, accountEmail:anonymous?null:runSettings.accountEmail, expectedCount:scenarioCount(runSettings), environment: baseSettings.environment, loadTest:load?runSettings.loadTest:undefined, status: 'RUNNING', startedAt: new Date().toISOString(), report: null, trigger:options.trigger==='schedule'?'schedule':'manual', forceLogin:options.forceLogin===true, preview:!anonymous&&options.preview!==false, headed:!anonymous&&options.headed===true, speed:options.speed||0 };
         const runDir = path.join(dataDir, 'runs', id);
+        if(!anonymous)Object.assign(run,runScope(runSettings));
         await fs.mkdir(runDir, { recursive: true });
         await fs.writeFile(path.join(runDir,'config.json'),JSON.stringify(runSettings,null,2));
         await record(run);
@@ -169,7 +182,7 @@ export async function createDashboard({ dataDir = dataRoot, checkReadiness = rea
         } finally { launching = false; }
       }
       if (req.method !== 'GET') return json(405, { error: 'Niedozwolona metoda.' });
-      if (url.pathname === '/api/state') return json(200, { ...(await checkReadiness(profiles.settings())), scenarios: scenarios(profiles.settings(),{healthConfig:loadHealthConfig(serviceConfigRoot,profiles.baseProvider().environment)}), serviceHealth:{config:loadHealthConfig(serviceConfigRoot,profiles.baseProvider().environment),...healthReadiness(loadHealthConfig(serviceConfigRoot,profiles.baseProvider().environment),profiles.baseProvider()),expectedCount:9}, environment, websiteAvailability:websiteReadiness(profiles.baseProvider()), loadTesting:{config:loadSettings(dataDir),engineInstalled:loadEngineExists(),...loadReadiness(loadSettings(dataDir),profiles.baseProvider(),profiles.read(),loadEngineExists()),running:activeRun?.suite==='load'}, expectedCount:scenarioCount(profiles.settings()), profiles:await teachers.state(), schedule:scheduler.state(), notifications:await notifications.state(), history: await history(), running: !!active || launching, busy:configuring });
+      if (url.pathname === '/api/state') return json(200, { ...(await checkReadiness(profiles.settings())), scenarios: scenarios(profiles.settings(),{healthConfig:loadHealthConfig(serviceConfigRoot,profiles.baseProvider().environment)}), serviceHealth:{config:loadHealthConfig(serviceConfigRoot,profiles.baseProvider().environment),...healthReadiness(loadHealthConfig(serviceConfigRoot,profiles.baseProvider().environment),profiles.baseProvider()),expectedCount:9}, environment, websiteAvailability:websiteReadiness(profiles.baseProvider()), loadTesting:{config:loadSettings(dataDir),engineInstalled:loadEngineExists(),...loadReadiness(loadSettings(dataDir),profiles.baseProvider(),profiles.read(),loadEngineExists()),running:activeRun?.suite==='load'}, expectedCount:scenarioCount(profiles.settings()), profiles:await teachers.state(), schedule:await scheduleState(), notifications:await notifications.state(), history: await history(), running: !!active || launching, busy:configuring });
       const asset=url.pathname.match(/^\/api\/runs\/([a-f0-9-]{36})\/(events|preview)$/);
       if(asset){
         if(!(await history()).some(run=>run.id===asset[1]))return json(404,{error:'Nie znaleziono przebiegu.'});
@@ -186,6 +199,7 @@ export async function createDashboard({ dataDir = dataRoot, checkReadiness = rea
       if(url.pathname==='/panel.css'){
         res.writeHead(200,{'Content-Type':'text/css; charset=utf-8','Cache-Control':'no-store'});return res.end(await fs.readFile(new URL('./panel.css',import.meta.url)));
       }
+      if(url.pathname==='/theme.js'){res.writeHead(200,{'Content-Type':'text/javascript; charset=utf-8','Cache-Control':'no-store'});return res.end(await fs.readFile(new URL('./theme.js',import.meta.url)));}
       if(url.pathname==='/environment-client.js'){res.writeHead(200,{'Content-Type':'text/javascript; charset=utf-8','Cache-Control':'no-store'});return res.end(await fs.readFile(new URL('./environment-client.js',import.meta.url)));}
       if(url.pathname==='/load-testing.js'){res.writeHead(200,{'Content-Type':'text/javascript; charset=utf-8','Cache-Control':'no-store'});return res.end(await fs.readFile(new URL('./load-testing.js',import.meta.url)));}
       if(url.pathname==='/notifications.js'){res.writeHead(200,{'Content-Type':'text/javascript; charset=utf-8','Cache-Control':'no-store'});return res.end(await fs.readFile(new URL('./notifications.js',import.meta.url)));}
