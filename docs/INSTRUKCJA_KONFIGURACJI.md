@@ -349,7 +349,7 @@ Harmonogram jest dostępny w **PROD → Harmonogram**.
 1. Zaznacz **Konto nauczyciela i materiały**, **Dostępność ekranów wejścia** albo oba zestawy.
 2. Dla zestawu konta wybierz nauczyciela. Będą używane jego aktualne, włączone materiały. Wybór harmonogramu jest niezależny od ręcznego wyboru nauczyciela.
 3. Ustaw odstęp od 1 do 10080 minut.
-4. Zaznacz automatyczne uruchamianie i kliknij **Zapisz wybór i harmonogram**.
+4. Kliknij **Zapisz i włącz harmonogram** — dodatkowy checkbox nie jest potrzebny. Pierwszy cykl wykona się po wybranym odstępie. Jeśli chcesz tylko przygotować ustawienia, wybierz **Zapisz bez włączania**. Przy aktywnym harmonogramie główny przycisk ma nazwę **Zapisz zmiany harmonogramu**.
 5. Sprawdź **Zapisany zakres** i datę następnego cyklu. **Do zapisania** oznacza zmiany, które jeszcze nie obowiązują.
 
 ![Wybór testów i nauczyciela do harmonogramu](images/harmonogram-wybor-testow.png)

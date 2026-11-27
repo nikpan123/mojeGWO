@@ -6,6 +6,23 @@ import path from 'node:path';
 import {root} from '../lib/environment.mjs';
 import {createApplication} from '../dashboard/server.mjs';
 
+test('harmonogram włącza przycisk, a zapis bez włączania zachowuje go nieaktywnym',async()=>{
+ const server=await createApplication();await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));let browser;
+ try{
+  const origin='http://127.0.0.1:'+server.address().port,state=await(await fetch(origin+'/prod/api/state')).json();state.schedule.enabled=false;const requests=[];
+  const installed=await fs.access(chromium.executablePath()).then(()=>true,()=>false);browser=await chromium.launch({headless:true,...(installed?{}:{channel:'msedge'})});const page=await browser.newPage();
+  await page.route('**/prod/api/state',route=>route.fulfill({json:state}));
+  await page.route('**/prod/api/schedule',route=>{const input=route.request().postDataJSON();requests.push(input);Object.assign(state.schedule,input,{revision:state.schedule.revision+1,nextRunAt:input.enabled?'2026-11-27T12:00:00Z':null});return route.fulfill({json:{schedule:state.schedule}});});
+  await page.goto(origin+'/prod/#schedule');const submit=page.locator('#schedule-form button[type="submit"]');
+  await expect(page.locator('#schedule-form input[name="enabled"]')).toHaveCount(0);await expect(submit).toHaveText('Zapisz i włącz harmonogram');
+  await page.locator('#schedule-form input[name="intervalMinutes"]').fill('5');await page.locator('#schedule-save-only').click();
+  await expect(page.locator('#schedule-message')).toContainText('Automatyczne uruchamianie jest wyłączone');assert.equal(requests[0].enabled,false);assert.equal(requests[0].intervalMinutes,5);
+  await submit.click();await expect(page.locator('#schedule-status')).toHaveText('Harmonogram włączony');await expect(submit).toHaveText('Zapisz zmiany harmonogramu');await expect(page.locator('#schedule-save-only')).toBeHidden();assert.equal(requests[1].enabled,true);
+  await page.locator('#schedule-form input[name="intervalMinutes"]').fill('10');await submit.click();await expect(page.locator('#schedule-message')).toContainText('Zapisano');await expect(page.locator('#schedule-form input[name="intervalMinutes"]')).toHaveValue('10');assert.equal(requests[2].enabled,true);assert.equal(requests[2].intervalMinutes,10);
+  await page.locator('#schedule-disable').click();await expect(page.locator('#schedule-status')).toHaveText('Harmonogram wyłączony');await expect(submit).toHaveText('Zapisz i włącz harmonogram');await expect(page.locator('#schedule-save-only')).toBeVisible();assert.equal(requests[3].enabled,false);
+ }finally{await browser?.close();await new Promise(resolve=>server.close(resolve));}
+});
+
 test('podgląd przegląda zapisane zrzuty i zachowuje wybór po odświeżeniu',async()=>{
  const server=await createApplication();await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));let browser;
  try{

@@ -14,13 +14,16 @@
   const suites=['functional','websites'].filter(suite=>form.elements[suite].checked),note=$('#schedule-selection'),teacherStep=$('#schedule-teacher-step');
   if(note)note.textContent=suites.length?(dirty?'Do zapisania: ':'Wybrane testy: ')+scope(suites,form.elements.profileId.value):'Nie wybrano testów. Zaznacz co najmniej jeden zestaw.';
   if(teacherStep)teacherStep.hidden=!form.elements.functional.checked;
-  form.querySelector('[type=submit]').disabled=pending||!suites.length;
+  const submit=form.querySelector('[type=submit]');submit.disabled=pending||!suites.length;submit.textContent=saved.enabled?'Zapisz zmiany harmonogramu':'Zapisz i włącz harmonogram';
+  $('#schedule-save-only').hidden=saved.enabled;$('#schedule-save-only').disabled=pending||!suites.length;
+  $('#schedule-start-hint').textContent=saved.enabled?'Harmonogram jest włączony. Zapisanie zmian uaktualni ustawienia i wyznaczy kolejny termin.':'Włącz cykliczne testy przyciskiem „Zapisz i włącz harmonogram”. Pierwszy cykl wykona się po ustawionym odstępie. „Zapisz bez włączania” zachowa ustawienia na później.';
   $('#schedule-now').disabled=pending||saved.running||dirty||!suites.length;
  }
  form.addEventListener('input',()=>{dirty=true;renderSelection();});
- const options=()=>({enabled:form.elements.enabled.checked,intervalMinutes:Number(form.elements.intervalMinutes.value),suites:['functional','websites'].filter(s=>form.elements[s].checked),profileId:form.elements.profileId.value,revision:saved.revision});
- async function send(path,input){pending=true;try{const response=await fetch(path,{method:'POST',headers:{'Content-Type':'application/json','X-Health-Token':$('meta[name=health-token]').content},body:JSON.stringify(input)});const data=await response.json();if(!response.ok)throw new Error(data.error);saved=data.schedule;dirty=false;revision=-1;$('#schedule-message').textContent=path.endsWith('/run')?'Uruchomiono zapisane testy.':saved.enabled?'Zapisano wybór testów i włączono harmonogram.':'Zapisano ustawienia. Automatyczne uruchamianie jest wyłączone.';await window.refreshMojeGwo?.();}catch(e){$('#schedule-message').textContent=e.message;}finally{pending=false;}}
- form.onsubmit=e=>{e.preventDefault();void send('/api/schedule',options());};
+ const options=enabled=>({enabled,intervalMinutes:Number(form.elements.intervalMinutes.value),suites:['functional','websites'].filter(s=>form.elements[s].checked),profileId:form.elements.profileId.value,revision:saved.revision});
+ async function send(path,input){pending=true;renderSelection();$('#schedule-disable').disabled=true;try{const response=await fetch(path,{method:'POST',headers:{'Content-Type':'application/json','X-Health-Token':$('meta[name=health-token]').content},body:JSON.stringify(input)});const data=await response.json();if(!response.ok)throw new Error(data.error);saved=data.schedule;dirty=false;revision=-1;$('#schedule-message').textContent=path.endsWith('/run')?'Uruchomiono zapisane testy.':saved.enabled?'Zapisano wybór testów i włączono harmonogram.':'Zapisano ustawienia. Automatyczne uruchamianie jest wyłączone.';await window.refreshMojeGwo?.();}catch(e){$('#schedule-message').textContent=e.message;}finally{pending=false;renderSelection();$('#schedule-disable').disabled=!saved?.enabled;}}
+ form.onsubmit=e=>{e.preventDefault();void send('/api/schedule',options(true));};
+ $('#schedule-save-only').onclick=()=>{if(form.reportValidity())void send('/api/schedule',options(false));};
  $('#schedule-disable').onclick=()=>saved&&send('/api/schedule',{enabled:false,intervalMinutes:saved.intervalMinutes,suites:saved.suites,profileId:saved.profileId,revision:saved.revision});
  $('#schedule-now').onclick=()=>send('/api/schedule/run',{});
  const outcome=event=>event.type==='PASS'?'pass':['FAIL','ERROR'].includes(event.type)?'fail':event.type==='RUN'?'running':'neutral';
@@ -83,11 +86,12 @@
   if(!state.schedule)return;saved=state.schedule;profiles=state.profiles.teachers;const s=saved;
   $('#schedule-status').textContent=s.running?'Cykl w toku':s.enabled?'Harmonogram włączony':'Harmonogram wyłączony';
   $('#schedule-next').textContent=s.enabled?'Następny cykl: '+when(s.nextRunAt)+' · co '+s.intervalMinutes+' min':'Brak zaplanowanego uruchomienia.';
-  if(!dirty&&revision!==s.revision){revision=s.revision;form.elements.enabled.checked=s.enabled;form.elements.intervalMinutes.value=s.intervalMinutes;for(const suite of ['functional','websites'])form.elements[suite].checked=s.suites.includes(suite);const select=form.elements.profileId;select.replaceChildren(...state.profiles.teachers.filter(t=>t.enabled).map(t=>{const o=document.createElement('option');o.value=t.id;o.textContent=t.label;return o;}));select.value=s.profileId;}
+  if(!dirty&&revision!==s.revision){revision=s.revision;form.elements.intervalMinutes.value=s.intervalMinutes;for(const suite of ['functional','websites'])form.elements[suite].checked=s.suites.includes(suite);const select=form.elements.profileId;select.replaceChildren(...state.profiles.teachers.filter(t=>t.enabled).map(t=>{const o=document.createElement('option');o.value=t.id;o.textContent=t.label;return o;}));select.value=s.profileId;}
   const savedScope=$('#schedule-saved-scope');if(savedScope)savedScope.textContent='Zapisany zakres: '+scope(s.suites,s.profileId);
   renderSelection();
   $('#schedule-now').disabled=pending||s.running||state.running||state.busy||dirty;
   $('#schedule-disable').disabled=pending||!s.enabled;
+  $('#schedule-disable').hidden=!s.enabled;
   renderEvents();
  };
 })();

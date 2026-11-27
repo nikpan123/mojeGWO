@@ -119,7 +119,7 @@ W panelu **PROD → Harmonogram**:
 
 1. Zaznacz testy: **Konto nauczyciela i materiały**, **Dostępność ekranów wejścia** albo oba zestawy. Opisy przy wyborze wyjaśniają ich zakres.
 2. Dla testów konta wybierz nauczyciela. Panel pokaże jego zakres i liczbę kontroli. Same testy dostępności stron nie wymagają konta.
-3. Ustaw odstęp, zaznacz automatyczne uruchamianie i kliknij **Zapisz wybór i harmonogram**. Podsumowanie rozróżnia zapisany zakres i zmiany oczekujące na zapis.
+3. Ustaw odstęp i kliknij **Zapisz i włącz harmonogram**. Pierwszy cykl wykona się po wybranym odstępie. **Zapisz bez włączania** zachowuje ustawienia bez uruchamiania harmonogramu. Przy aktywnym harmonogramie użyj **Zapisz zmiany harmonogramu**.
 
 Komputer i panel muszą działać; samą kartę przeglądarki można zamknąć. Wybrane zestawy wykonują się kolejno, a zajęty termin jest pomijany. Harmonogram można wyłączyć w tym samym widoku. Testy obciążeniowe nie są uruchamiane z harmonogramu.
 
