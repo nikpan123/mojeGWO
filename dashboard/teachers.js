@@ -30,7 +30,7 @@
  function materialEditor(resource=null,catalog=null){
   const f=$('#material-form');f.reset();resourceId=resource?.id||'';
   const value=resource||catalog||{};f.elements.title.value=value.title||'';f.elements.displayTitle.value=value.displayTitle||'';f.elements.kind.value=value.kind||'multipodrecznik';f.elements.groupLabel.value=value.groupLabel||'';f.elements.entryURL.value=value.entryURL||'';
-  f.elements.description.value=value.description||'';f.elements.libraryLabel.value=value.libraryLabel||'';f.elements.adapter.value=resource?.adapter||(resource?'template':value.kind==='aplikacja'?'access':'reader');f.elements.enabled.checked=value.enabled!==false;
+  f.elements.libraryLabel.value=value.libraryLabel||'';f.elements.adapter.value=resource?.adapter||(resource?'template':value.kind==='aplikacja'?'access':'reader');f.elements.enabled.checked=value.enabled!==false;
   f.elements.templateId.innerHTML='<option value="">Bez wzorca</option>'+data.templates.map(t=>`<option value="${esc(t.id)}">${esc(t.title)}</option>`).join('');
   f.elements.templateId.value=resource?.templateId||(resource&&data.templates.some(t=>t.id===resource.id)?resource.id:'');
   f.elements.acceptRules.checked=!!resource?.approvedRules;f.dataset.observedId=String(resource?.observedAccess?.id||catalog?.id||'');

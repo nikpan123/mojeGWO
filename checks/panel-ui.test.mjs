@@ -83,6 +83,7 @@ test('panel przełącza TEST i PROD, zachowuje funkcje i działa na telefonie',a
    await page.locator('nav a[href="#teachers"]').click();
    await page.locator('[data-action="add-resource"]').click();
    const material=page.locator('#material-form'),entry=material.locator('[name="entryURL"]');
+   await expect(material.locator('[name="description"]')).toHaveCount(0);await expect(material.locator('details summary')).toHaveText('Nazwa na karcie');
    await material.locator('[name="kind"]').selectOption('aplikacja');
    await material.locator('[name="adapter"]').selectOption('worksheets');
    await expect(entry).toHaveValue(expected);await expect(entry).toHaveAttribute('required','');
