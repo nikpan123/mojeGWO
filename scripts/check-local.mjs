@@ -18,7 +18,7 @@ function copySources(source,destination){
   if(entry.isSymbolicLink()||entry.name.endsWith('.local.json')||entry.name.startsWith('.env'))continue;
   const from=path.join(source,entry.name),to=path.join(destination,entry.name);
   if(entry.isDirectory())copySources(from,to);
-  else if(/\.(mjs|js|css|html|json|md)$/.test(entry.name))fs.copyFileSync(from,to);
+  else if(/\.(mjs|js|css|html|json|md|svg)$/.test(entry.name))fs.copyFileSync(from,to);
  }
 }
 try{

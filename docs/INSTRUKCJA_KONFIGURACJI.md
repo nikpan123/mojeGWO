@@ -178,7 +178,7 @@ Otwórz adres podany w terminalu. Zwykle będzie to `http://127.0.0.1:4182`; prz
 
 Na przygotowanym komputerze skrót **Centrum-testow** uruchamia Centrum oraz wspólny panel moje.gwo na `http://127.0.0.1:4184`. Możesz korzystać z panelu przez Centrum albo w osobnej karcie. Skrót Centrum jest lokalną integracją; samo sklonowanie repozytorium na innym komputerze nie tworzy tego skrótu.
 
-Wybierz **Środowisko: TEST lub PROD**. Konta i materiały skonfiguruj osobno dla każdego środowiska. W prawym górnym rogu możesz wybrać motyw **Jasny / Ciemny / Systemowy**.
+W nagłówku kliknij **TEST** albo **PROD**. Aktywne środowisko jest wyróżnione. Konta i materiały skonfiguruj osobno dla każdego środowiska. Przyciskami **Jasny / Ciemny / Systemowy** w prawym górnym rogu zmienisz motyw; panel zapamiętuje wybór.
 
 ![Wybór środowiska i motywu panelu](images/wybor-srodowiska-i-motywu.png)
 

@@ -13,17 +13,23 @@ test('panel przełącza TEST i PROD, zachowuje funkcje i działa na telefonie',a
   const installed=await fs.access(chromium.executablePath()).then(()=>true,()=>false);
   browser=await chromium.launch({headless:true,...(installed?{}:{channel:'msedge'})});
   const page=await browser.newPage({viewport:{width:1440,height:1000}}),errors=[];
+  const arrowResponses=[],policyErrors=[];
+  page.on('response',response=>{if(/select-chevron-(light|dark)\.svg$/.test(response.url()))arrowResponses.push({url:response.url(),status:response.status()});});
+  page.on('console',message=>{if(message.type()==='error'&&/Content Security Policy/.test(message.text()))policyErrors.push(message.text());});
   page.on('pageerror',error=>errors.push(error.message));
-  await page.goto(origin+'/test/');await expect(page.locator('#environment-choice')).toHaveValue('test');
-  await page.locator('#theme-mode').selectOption('dark');await expect(page.locator('html')).toHaveAttribute('data-theme','dark');
-  await page.reload();await expect(page.locator('#theme-mode')).toHaveValue('dark');
+  await page.goto(origin+'/test/');await expect(page.locator('#environment-choice [aria-current="page"]')).toHaveText('TEST');
+  await page.locator('nav a[href="#run"]').click();
+  await expect.poll(()=>arrowResponses.some(response=>response.url.endsWith('select-chevron-light.svg')&&response.status===200)).toBe(true);
+  await page.locator('[data-theme-value="dark"]').click();await expect(page.locator('html')).toHaveAttribute('data-theme','dark');
+  await expect.poll(()=>arrowResponses.some(response=>response.url.endsWith('select-chevron-dark.svg')&&response.status===200)).toBe(true);
+  await page.reload();await expect(page.locator('[data-theme-value="dark"]')).toHaveAttribute('aria-pressed','true');
   await expect(page.locator('html')).toHaveAttribute('data-theme','dark');
-  await page.locator('#theme-mode').selectOption('light');await expect(page.locator('html')).toHaveAttribute('data-theme','light');
+  await page.locator('[data-theme-value="light"]').click();await expect(page.locator('html')).toHaveAttribute('data-theme','light');
   await expect(page.locator('#teacher-choice option')).toHaveCount(1);
   await page.locator('nav a[href="#load"]').click();await expect(page.locator('#load-form')).toBeVisible();
   await expect(page.locator('#load-run')).toBeDisabled();
-  await page.locator('#environment-choice').selectOption('prod');await page.waitForURL('**/prod/');
-  await expect(page.locator('#environment-choice')).toHaveValue('prod');
+  await page.locator('#environment-choice a').filter({hasText:'PROD'}).click();await page.waitForURL('**/prod/');
+  await expect(page.locator('#environment-choice [aria-current="page"]')).toHaveText('PROD');
   await expect(page.locator('#teacher-choice option')).toHaveCount(1);assert.equal(await page.locator('#load-form').count(),0);
   await page.locator('nav a[href="#run"]').click();await expect(page.locator('#run')).toBeDisabled();
   assert.equal(await page.locator('#suite-choice option[value="websites"]').count(),1);
@@ -31,22 +37,22 @@ test('panel przełącza TEST i PROD, zachowuje funkcje i działa na telefonie',a
   await expect(page.locator('.scenario-group')).toHaveCount(4);
   await expect(page.locator('.scenario-group[data-group="functional"] .scenario-card')).toHaveCount(5);
   await expect(page.locator('.scenario-group[data-group="functional"]')).toContainText('Multipodręcznik — otwarcie i zmiana stron');
-  for(const selector of ['#environment-choice','#theme-mode']){
-   assert.equal(await page.locator(selector).evaluate(el=>el.getBoundingClientRect().height),34);
-   assert.equal(await page.locator(selector).evaluate(el=>getComputedStyle(el).paddingRight),'34px');
-  }
+  await expect(page.locator('#environment-choice select,#theme-mode select')).toHaveCount(0);
+  await expect(page.locator('#environment-choice a')).toHaveCount(2);
+  await expect(page.locator('#theme-mode button')).toHaveCount(3);
   await page.locator('#scenario-filter').selectOption('services');await expect(page.locator('.scenario-card')).toHaveCount(9);
   await page.locator('#scenario-search').fill('cache');await expect(page.locator('.scenario-card')).toHaveCount(3);
   await page.locator('.scenario-details summary').first().click();await expect(page.locator('.scenario-details[open]')).toHaveCount(1);
   await page.locator('#scenario-search').fill('brak-dopasowania-123');await expect(page.locator('.scenario-empty')).toBeVisible();
   const dir=path.join(root,'.health','qa');await fs.mkdir(dir,{recursive:true});
   await page.screenshot({path:path.join(dir,'prod-panel.png'),fullPage:true});
-  await page.locator('#environment-choice').selectOption('test');await page.waitForURL('**/test/');
+  await page.locator('#environment-choice a').filter({hasText:'TEST'}).click();await page.waitForURL('**/test/');
   await expect(page.locator('#teacher-choice option')).toHaveCount(1);
   assert.equal(await page.locator('nav a[href="#schedule"]').count(),0);
   await page.setViewportSize({width:390,height:844});await page.screenshot({path:path.join(dir,'test-mobile.png'),fullPage:true});
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
   assert.deepEqual(errors,[]);
+  assert.deepEqual(policyErrors,[]);
  }finally{await browser?.close();await new Promise(resolve=>server.close(resolve));}
 });
 

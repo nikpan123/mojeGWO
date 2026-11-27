@@ -1,4 +1,3 @@
-document.querySelector('#environment-choice').addEventListener('change',event=>{location.href='/'+event.target.value+'/';});
 const $=s=>document.querySelector(s);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const names={PASS:'Zaliczony',FAIL:'Niezaliczony',RUNNING:'W trakcie',passed:'Zaliczony',failed:'Błąd',skipped:'Pominięty',timedOut:'Przekroczony czas'};
