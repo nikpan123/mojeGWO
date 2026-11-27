@@ -11,13 +11,15 @@ test('podgląd przegląda zapisane zrzuty i zachowuje wybór po odświeżeniu',a
  try{
   const origin='http://127.0.0.1:'+server.address().port,state=await(await fetch(origin+'/prod/api/state')).json();
   const id='aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',emptyId='bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb';
-  state.history=[{id,status:'PASS',startedAt:'2026-11-27T09:00:00Z',expectedCount:2},{id:emptyId,status:'PASS',startedAt:'2026-11-26T09:00:00Z',expectedCount:1}];
+  state.history=[{id,status:'PASS',suite:'functional',profileLabel:'Anna Nowak',startedAt:'2026-11-27T09:00:00Z',expectedCount:2},{id:emptyId,status:'PASS',startedAt:'2026-11-26T09:00:00Z',expectedCount:1}];
   const installed=await fs.access(chromium.executablePath()).then(()=>true,()=>false);browser=await chromium.launch({headless:true,...(installed?{}:{channel:'msedge'})});const page=await browser.newPage();
   await page.route('**/prod/api/state',route=>route.fulfill({json:state}));
-  await page.route('**/prod/api/runs/*/events',route=>route.fulfill({json:{events:[],previewUpdatedAt:null}}));
+  await page.route('**/prod/api/runs/*/events',route=>route.fulfill({json:{events:[{kind:'test',at:'2026-11-27T09:00:00Z',text:'HC-03/cccccccc-cccc-cccc-cccc-cccccccccccc — otwarcie i podstawowa funkcja',displayText:'Sprawdzenie działania — Podręcznik przykładowy'}],previewUpdatedAt:null}}));
   await page.route('**/prod/api/runs/*/screenshots',route=>route.fulfill({json:{screenshots:route.request().url().includes(emptyId)?[]:[0,1].map(index=>({id:index,label:index?'Kolejna strona':'Otwarcie czytnika',testTitle:'Podręcznik przykładowy',status:'passed',url:'/api/runs/'+id+'/screenshots/'+index}))}}));
   await page.route('**/prod/api/runs/*/screenshots/*',route=>route.fulfill({contentType:'image/png',body:Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jRZkAAAAASUVORK5CYII=','base64')}));
   await page.goto(origin+'/prod/#live');await expect(page.locator('#screenshot-controls')).toBeVisible();await expect(page.locator('#screenshot-count')).toHaveText('1 / 2');
+  await expect(page.locator('#current-test')).toHaveText('Sprawdzenie działania — Podręcznik przykładowy');await expect(page.locator('#logs')).toContainText('Sprawdzenie działania — Podręcznik przykładowy');await expect(page.locator('#logs')).not.toContainText('cccccccc-cccc');
+  await expect(page.locator('#run-choice option').first()).toContainText('Konto i materiały · Anna Nowak');
   await expect(page.locator('#screenshot-prev')).toBeDisabled();await expect.poll(()=>page.locator('#browser-preview').evaluate(image=>image.naturalWidth)).toBeGreaterThan(0);
   await page.locator('#screenshot-next').click();await expect(page.locator('#screenshot-count')).toHaveText('2 / 2');await expect(page.locator('#screenshot-next')).toBeDisabled();
   await expect(page.locator('#screenshot-caption')).toContainText('Kolejna strona');await expect(page.locator('#screenshot-open')).toHaveAttribute('href','/prod/api/runs/'+id+'/screenshots/1');

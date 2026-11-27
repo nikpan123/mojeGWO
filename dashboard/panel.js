@@ -1,6 +1,7 @@
 const $=s=>document.querySelector(s);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const names={PASS:'Zaliczony',FAIL:'Niezaliczony',RUNNING:'W trakcie',STOPPED:'Zatrzymany',passed:'Zaliczony',failed:'Błąd',skipped:'Pominięty',timedOut:'Przekroczony czas'};
+const runName=run=>({functional:'Konto i materiały',websites:'Dostępność stron',services:'Healthcheck usług',load:'Obciążenie TEST'}[run.suite]||'Testy')+(run.profileLabel&&!['websites','services'].includes(run.suite)?' · '+run.profileLabel:'');
 let selected='',state=null,loading=false,previewKey='',refreshing=false;
 let galleryKey='',screenshots=[],screenshotIndex=0;
 const screenshotTitle=image=>image.testTitle.split(' · ')[0];
@@ -70,9 +71,9 @@ async function live(){
  try{
   const response=await fetch(`/api/runs/${runId}/events`);if(!response.ok)return;const data=await response.json();if(selected!==runId)return;
   const events=data.events;const current=[...events].reverse().find(e=>e.kind==='test');const step=[...events].reverse().find(e=>e.kind==='step');const results=events.filter(e=>e.kind==='result');const run=state.history.find(r=>r.id===runId);
-  $('#current-test').textContent=current?.text||'Przygotowanie sesji';$('#current-step').textContent=run?.status==='RUNNING'?(step?.text||'Sprawdzanie sesji i logowanie…'):(run?.status==='PASS'?'Wszystkie kontrole zaliczone.':run?.message||'Przebieg zakończony. Szczegóły w raporcie.');
+  $('#current-test').textContent=current?.displayText||current?.text||'Przygotowanie sesji';$('#current-step').textContent=run?.status==='RUNNING'?(step?.displayText||step?.text||'Sprawdzanie sesji i logowanie…'):(run?.status==='PASS'?'Wszystkie kontrole zaliczone.':run?.message||'Przebieg zakończony. Szczegóły w raporcie.');
   $('#progress').textContent=`${results.length} / ${run?.expectedCount||5}`;
-  $('#logs').textContent=events.length?events.map(e=>`${new Date(e.at).toLocaleTimeString('pl-PL')}  ${e.text}${e.status?' — '+(names[e.status]||e.status):''}`).join('\n'):'Ten przebieg nie ma zapisanych logów kroków. Logi są dostępne dla nowych uruchomień.';
+  $('#logs').textContent=events.length?events.map(e=>`${new Date(e.at).toLocaleTimeString('pl-PL')}  ${e.displayText||e.text}${e.status?' — '+(names[e.status]||e.status):''}`).join('\n'):'Ten przebieg nie ma zapisanych logów kroków. Logi są dostępne dla nowych uruchomień.';
   $('#logs').scrollTop=$('#logs').scrollHeight;$('#logs-link').hidden=false;$('#logs-link').href=window.mojeGwoURL(`/api/runs/${runId}/events`);
   if($('#screenshot-controls')){
    if(run&&run.status!=='RUNNING'){
@@ -111,7 +112,7 @@ async function refresh(){
   window.renderScenarios?.(state);
   const last=state.history[0];$('#last-result').textContent=last?(names[last.status]||last.status):'Brak wyników';$('#last-count').textContent=last?.counts?`${last.counts.passed} / ${last.expectedCount||5}`:'—';
   if(!selected&&last)selected=last.id;
-  const choice=$('#run-choice');const list=state.history.map(r=>`${r.id}:${r.status}`).join('|');if(choice.dataset.list!==list){choice.dataset.list=list;choice.innerHTML=state.history.map(r=>`<option value="${esc(r.id)}">${esc(new Date(r.startedAt).toLocaleString('pl-PL'))} · ${esc(names[r.status]||r.status)}</option>`).join('')||'<option value="">Brak przebiegów</option>';}
+  const choice=$('#run-choice');const list=state.history.map(r=>`${r.id}:${r.status}`).join('|');if(choice.dataset.list!==list){choice.dataset.list=list;choice.innerHTML=state.history.map(r=>`<option value="${esc(r.id)}">${esc(new Date(r.startedAt).toLocaleString('pl-PL'))} · ${esc(runName(r))} · ${esc(names[r.status]||r.status)}</option>`).join('')||'<option value="">Brak przebiegów</option>';}
   choice.value=selected;
   $('#history').innerHTML=state.history.map(r=>`<tr><td>${esc(new Date(r.startedAt).toLocaleString('pl-PL'))}</td><td>${esc(r.profileLabel||r.accountEmail||'Dotychczasowy profil')}</td><td class="${r.status==='PASS'?'pass':r.status==='FAIL'?'fail':''}">${esc(names[r.status]||r.status)}</td><td>${r.counts?`${r.counts.passed} / ${r.expectedCount||5}`:'—'}</td><td><button data-live="${esc(r.id)}">Przebieg i logi</button>${/^\/report\/[a-f0-9-]{36}\/$/.test(r.report||'')?`<a href="${window.mojeGwoURL(r.report)}" target="_blank" rel="noopener">Raport ↗</a>`:''}</td></tr>`).join('')||'<tr><td colspan="5">Nie wykonano jeszcze testów.</td></tr>';
   await live();

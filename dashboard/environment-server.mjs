@@ -1,6 +1,7 @@
 import {loadSettings,saveLoadSettings,loadReadiness,validateLoad} from '../lib/load-testing.mjs';
 import {stopTestProcess} from '../lib/stop-test-process.mjs';
 import {runScreenshots,screenshotBytes} from '../lib/run-screenshots.mjs';
+import {readableTestName} from '../lib/test-names.mjs';
 import {existsSync} from 'node:fs';
 import {environment,dataRoot} from '../lib/environment.mjs';
 import {websiteReadiness} from '../lib/website-availability.mjs';
@@ -213,7 +214,7 @@ export async function createDashboard({ dataDir = dataRoot, checkReadiness = rea
       }
       const asset=url.pathname.match(/^\/api\/runs\/([a-f0-9-]{36})\/(events|preview)$/);
       if(asset){
-        if(!(await history()).some(run=>run.id===asset[1]))return json(404,{error:'Nie znaleziono przebiegu.'});
+        const run=(await history()).find(run=>run.id===asset[1]);if(!run)return json(404,{error:'Nie znaleziono przebiegu.'});
         const directory=path.join(dataDir,'runs',asset[1],'live');
         if(asset[2]==='preview'){
           const bytes=await fs.readFile(path.join(directory,'preview.jpg'));
@@ -221,6 +222,9 @@ export async function createDashboard({ dataDir = dataRoot, checkReadiness = rea
         }
         let events=[];
         try { const content=await fs.readFile(path.join(directory,'events.jsonl'),'utf8');events=content.split('\n').filter(Boolean).flatMap(line=>{try{return [JSON.parse(line)];}catch{return [];}}).slice(-500); } catch(e){if(e.code!=='ENOENT')throw e;}
+        let config={resources:run.materials||[],profileLabel:run.profileLabel};
+        try{config=JSON.parse(await fs.readFile(path.join(directory,'..','config.json'),'utf8'));}catch{}
+        events=events.map(event=>({...event,displayText:['test','result'].includes(event.kind)?readableTestName(event.text,config):event.text}));
         const previewUpdatedAt=await fs.stat(path.join(directory,'preview.jpg')).then(s=>s.mtimeMs,()=>null);
         return json(200,{events,previewUpdatedAt});
       }

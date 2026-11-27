@@ -4,6 +4,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
 import {createDashboard} from '../dashboard/environment-server.mjs';
+import {readableTestName} from '../lib/test-names.mjs';
 const png='iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jRZkAAAAASUVORK5CYII=';
 
 test('galeria udostępnia zrzuty raportu i podgląd, bez ścieżek lokalnych i dostępu poza przebieg',async()=>{
@@ -15,9 +16,12 @@ test('galeria udostępnia zrzuty raportu i podgląd, bez ścieżek lokalnych i d
   const outside=path.join(directory,'private.png');await fs.writeFile(outside,'private');
   await fs.writeFile(path.join(directory,'history.json'),JSON.stringify([{id,status:'PASS'}]));
   await fs.writeFile(path.join(run,'config.json'),JSON.stringify({resources:[{id:'reader',title:'Podręcznik przykładowy'}]}));
+  await fs.writeFile(path.join(run,'live','events.jsonl'),[{kind:'test',text:'HC-03/reader — otwarcie i podstawowa funkcja'},{kind:'result',text:'HC-02/reader — nauczyciel ma aktywny dostęp: Dawna nazwa z logu',status:'passed'},{kind:'step',text:'Załadowanie obrazów'}].map(event=>JSON.stringify(event)).join('\n'));
   await fs.writeFile(path.join(run,'results.json'),JSON.stringify({suites:[{specs:[{title:'HC-03/reader — otwarcie i podstawowa funkcja',tests:[{results:[{status:'passed',attachments:[{name:'kompozytor-01-otwarcie',contentType:'image/png',body:png},{name:'kompozytor-02-wynik',contentType:'image/png',path:file},{name:'ekran-aplikacji',contentType:'image/png',body:png},{name:'czytnik-01-otwarcie',contentType:'image/png',body:png},{name:'czytnik-02-zmiana-strony',contentType:'image/png',body:png},{name:'outside',contentType:'image/png',path:outside},{name:'relative-outside',contentType:'image/png',path:'../../private.png'},{name:'unsafe-type',contentType:'image/svg+xml',body:'PHN2Zz4='}]}]}]}]}]}));
   server=await createDashboard({dataDir:directory,checkReadiness:async()=>({ready:false,message:'Przykład'})});await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
   const origin='http://127.0.0.1:'+server.address().port,base=origin+'/api/runs/'+id+'/screenshots';
+  const events=(await(await fetch(origin+'/api/runs/'+id+'/events')).json()).events;
+  assert.equal(events[0].displayText,'Sprawdzenie działania — Podręcznik przykładowy');assert.equal(events[1].displayText,'Sprawdzenie dostępu — Podręcznik przykładowy');assert.equal(events[2].displayText,'Załadowanie obrazów');
   const response=await fetch(base),gallery=await response.json();assert.equal(response.status,200);assert.equal(gallery.screenshots.length,6);
   assert.match(gallery.screenshots[0].testTitle,/Podręcznik przykładowy/);assert.equal(gallery.screenshots[0].label,'1. Po otwarciu aplikacji');assert.equal(gallery.screenshots[1].label,'2. Po sprawdzeniu funkcji');assert.equal(gallery.screenshots[2].label,'Ekran aplikacji');assert.equal(gallery.screenshots[3].label,'1. Po otwarciu multipodręcznika');assert.equal(gallery.screenshots[4].label,'2. Po zmianie rozkładówki');
   assert.ok(!JSON.stringify(gallery).includes(directory));assert.ok(gallery.screenshots.every(image=>!('body' in image)&&!('file' in image)));
@@ -26,4 +30,12 @@ test('galeria udostępnia zrzuty raportu i podgląd, bez ścieżek lokalnych i d
   await fs.rm(path.join(run,'results.json'));const fallback=await(await fetch(base)).json();assert.equal(fallback.screenshots.length,1);
   await fs.rm(path.join(run,'live','preview.jpg'));assert.deepEqual((await(await fetch(base)).json()).screenshots,[]);
  }finally{if(server)await new Promise(resolve=>server.close(resolve));await fs.rm(directory,{recursive:true,force:true});}
+});
+
+test('nazwy kontroli pozostają czytelne także bez konfiguracji materiału',()=>{
+ assert.equal(readableTestName('HC-03/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa — otwarcie i podstawowa funkcja'),'Sprawdzenie działania materiału');
+ assert.equal(readableTestName('HC-02/old-id — nauczyciel ma aktywny dostęp: Matematyka'),'Sprawdzenie dostępu — Matematyka');
+ assert.equal(readableTestName('HC-01 — panel działa i sesja należy do właściwego nauczyciela',{accountDisplayName:'Anna Nowak'}),'Konto nauczyciela — Anna Nowak');
+ assert.equal(readableTestName('WEB-01/moje-gwo — moje.gwo: dostępność strony'),'moje.gwo: dostępność strony');
+ assert.equal(readableTestName('EP-02/api — czas odpowiedzi',{serviceHealth:{services:[{id:'api',name:'Przykładowa usługa'}]}}),'czas odpowiedzi — Przykładowa usługa');
 });
