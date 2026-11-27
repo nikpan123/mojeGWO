@@ -1,7 +1,7 @@
 const $=s=>document.querySelector(s);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const names={PASS:'Zaliczony',FAIL:'Niezaliczony',RUNNING:'W trakcie',STOPPED:'Zatrzymany',passed:'Zaliczony',failed:'Błąd',skipped:'Pominięty',timedOut:'Przekroczony czas'};
-const runName=run=>({functional:'Konto i materiały',websites:'Dostępność stron',services:'Healthcheck usług',load:'Obciążenie TEST'}[run.suite]||'Testy')+(run.profileLabel&&!['websites','services'].includes(run.suite)?' · '+run.profileLabel:'');
+const runName=run=>({functional:'Konto i materiały',websites:'Dostępność ekranów wejścia',services:'Healthcheck usług',load:'Obciążenie TEST'}[run.suite]||'Testy')+(run.profileLabel&&!['websites','services'].includes(run.suite)?' · '+run.profileLabel:'');
 let selected='',state=null,loading=false,previewKey='',refreshing=false;
 let galleryKey='',screenshots=[],screenshotIndex=0;
 const screenshotTitle=image=>image.testTitle.split(' · ')[0];
@@ -44,7 +44,7 @@ function renderHeaderStatus(){
  const stopSchedule=document.body.dataset.environment==='prod'&&(schedule?.enabled||schedule?.running);
  if(stop){stop.hidden=!state.running&&!stopSchedule;stop.disabled=stopPending||state.stopping||state.busy||(state.running&&!state.activeRunId);stop.textContent=stopPending||state.stopping?'Zatrzymywanie…':stopSchedule?'Zatrzymaj harmonogram':'Zatrzymaj test';}
  status.classList.toggle('is-running',!!running);
- if(running){setText(status,'Testy w toku'+(run?' · '+({functional:'Konto i materiały',websites:'Dostępność stron',services:'Healthcheck usług',load:'Obciążenie TEST'}[run.suite]||'Trwa przebieg'): ' · Przygotowanie przebiegu'));status.href='#live';}
+ if(running){setText(status,'Testy w toku'+(run?' · '+({functional:'Konto i materiały',websites:'Dostępność ekranów wejścia',services:'Healthcheck usług',load:'Obciążenie TEST'}[run.suite]||'Trwa przebieg'): ' · Przygotowanie przebiegu'));status.href='#live';}
  else if(state.busy){setText(status,'Trwa odczyt lub zapis konfiguracji');status.href='#teachers';}
  else if(schedule?.enabled){const next=new Date(schedule.nextRunAt);setText(status,schedule.nextRunAt&&Number.isFinite(next.getTime())?'Kolejny test: '+nextTestTime.format(next):'Harmonogram włączony · Oczekiwanie na termin');status.href='#schedule';}
  else{setText(status,document.body.dataset.environment==='prod'?'Harmonogram wyłączony':'Testy uruchamiane ręcznie');status.href='#run';}
@@ -113,7 +113,7 @@ async function refresh(){
   if(document.body.dataset.environment==='prod')window.renderSchedule?.(state);
   if(document.body.dataset.environment==='prod')window.renderNotifications?.(state);
   $('#run-heading').textContent=(websiteSuite?3:serviceSuite?state.serviceHealth.expectedCount:state.expectedCount)+' kontroli · '+(document.body.dataset.environment==='prod'?'PROD':'TEST');
-  $('#run-scope').textContent=websiteSuite?'3 strony: HTTPS, odpowiedź właściwej aplikacji, oczekiwany publiczny ekran i czas do 15 sekund. Bez logowania; zrzuty ekranów są w raporcie.':serviceSuite?'9 kontroli kontraktu trzech usług. Brak logowania, wyłączania zależności i automatycznej akceptacji odbioru.':'Zakres wynika z materiałów przypisanych do wybranego nauczyciela. Tylko włączone materiały biorą udział w testach.';
+  $('#run-scope').textContent=websiteSuite?'3 ekrany wejścia: HTTPS, odpowiedź właściwej aplikacji, oczekiwany publiczny ekran i czas do 15 sekund. Bez logowania; zrzuty ekranów są w raporcie.':serviceSuite?'9 kontroli kontraktu trzech usług. Brak logowania, wyłączania zależności i automatycznej akceptacji odbioru.':'Zakres wynika z materiałów przypisanych do wybranego nauczyciela. Tylko włączone materiały biorą udział w testach.';
   window.renderScenarios?.(state);
   const last=state.history[0];$('#last-result').textContent=last?(names[last.status]||last.status):'Brak wyników';$('#last-count').textContent=last?.counts?`${last.counts.passed} / ${last.expectedCount||5}`:'—';
   if(!selected&&last)selected=last.id;

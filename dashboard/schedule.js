@@ -5,7 +5,7 @@
  function scope(suites,profileId){
   const parts=[],teacher=profiles.find(profile=>profile.id===profileId);
   if(suites.includes('functional')){const resources=(teacher?.resources||[]).filter(resource=>resource.enabled!==false);const count=1+resources.reduce((total,resource)=>total+1+(resource.checkMode==='access'?0:1),0);parts.push('Konto i materiały — '+(teacher?.label||'wybierz nauczyciela')+(resources.length?' ('+count+' kontroli)':' (brak przypisanych materiałów)'));}
-  if(suites.includes('websites'))parts.push('Dostępność stron — 3 kontrole bez logowania');
+  if(suites.includes('websites'))parts.push('Dostępność ekranów wejścia — 3 kontrole bez logowania');
   if(suites.includes('services'))parts.push('Endpointy healthcheck — 9 kontroli');
   return parts.join(' + ');
  }
@@ -44,7 +44,7 @@
    const top=document.createElement('div');top.className='schedule-event-top';
    const badge=document.createElement('span');badge.className='schedule-event-badge';badge.textContent=labels[event.type]||event.type;
    const time=document.createElement('time');time.dateTime=event.at;time.textContent=when(event.at);top.append(badge,time);
-   const title=document.createElement('strong');title.className='schedule-event-title';title.textContent=({functional:'Konto nauczyciela i materiały',websites:'Dostępność stron',services:'Endpointy healthcheck'})[event.suite]||'Harmonogram';
+   const title=document.createElement('strong');title.className='schedule-event-title';title.textContent=({functional:'Konto nauczyciela i materiały',websites:'Dostępność ekranów wejścia',services:'Endpointy healthcheck'})[event.suite]||'Harmonogram';
    const message=document.createElement('p');message.textContent=event.message;
    li.append(top,title,message);
    if(event.suite==='functional'&&['PASS','FAIL','ERROR'].includes(event.type)){

@@ -1,4 +1,5 @@
 import {resolveExpectedAccess,findAccessCard,openAccessGroup,composerLibrary,resolveComposerLibrary} from '../lib/access-cards.mjs';
+import {checkComposerProjectList} from '../lib/composer-project-list.mjs';
 import fs from 'node:fs';
 import {startPreview} from '../lib/live-preview.mjs';
 import path from 'node:path';
@@ -165,7 +166,11 @@ for (const resource of settings.resources) {
       const library=resource.adapter==='composer'&&resource.libraryLabel?selectedLibrary:null;
       await expect(library||surface.locator(resource.readySelector)).toBeVisible();
       await expect(surface.locator(resource.resultSelector)).toBeHidden();
-      await (library||surface.locator(resource.actionSelector)).click();
+      const openLibrary=()=> (library||surface.locator(resource.actionSelector)).click();
+      if(composerScreenshots){
+        const result=await checkComposerProjectList(app,{surface,openLibrary});
+        await test.info().attach('potwierdzenie-listy-zestawow',{body:JSON.stringify(result),contentType:'application/json'});
+      }else await openLibrary();
       await expect(surface.locator(resource.resultSelector)).toBeVisible();
     });
     if(composerScreenshots)await test.step('Zrzut po sprawdzeniu funkcji Kompozytora',async()=>{

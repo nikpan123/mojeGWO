@@ -106,7 +106,8 @@ Czytnik zapisuje dwa zrzuty do raportu i ręcznej galerii: **1. Po otwarciu mult
 
 1. Odnajduje bibliotekę lub klasę wskazaną w konfiguracji materiału. Przy kilku dostępach do tego samego katalogu wybiera jednoznaczny aktywny dostęp z najpóźniejszym terminem ważności; niejednoznaczność kończy się błędem.
 2. Sprawdza widoczność właściwej karty i brak komunikatu **Dostęp zakończony** dla wybranego dostępu.
-3. Klika kartę klasy lub biblioteki i wymaga pojawienia się zakładki **Twoje zestawy**. Nie tworzy, nie edytuje, nie drukuje ani nie usuwa zestawów; nie sprawdza też treści wszystkich istniejących zestawów.
+3. Klika kartę klasy lub biblioteki i wymaga poprawnego pobrania listy **Twoje zestawy**: HTTP 200, JSON z listą i odpowiedź dla wybranej biblioteki.
+4. Otwiera **Twoje zestawy**, czeka na zakończenie ładowania i porównuje liczbę oraz nazwy pozycji z odpowiedzią serwera. Pusta lista przechodzi tylko przy odpowiedzi `[]` i komunikacie o braku zestawów. Błąd pobierania, niepoprawne dane lub sam widoczny nagłówek nie wystarczają. Nie tworzy, nie edytuje, nie drukuje ani nie usuwa zestawów; nie otwiera treści wszystkich zestawów.
 
 Każdy test działania Kompozytora zapisuje dwa zrzuty: **1. Po otwarciu aplikacji** i **2. Po sprawdzeniu funkcji**. Dla matematyki i fizyki drugi obraz pokazuje ekran po wejściu do klasy z zakładką **Twoje zestawy**, a dla edukacji wczesnoszkolnej — załadowany katalog zadań. Ten sam układ obowiązuje w raporcie i ręcznej galerii panelu; wcześniejsze przebiegi zachowują dotychczasowe obrazy.
 
@@ -116,7 +117,7 @@ Regulamin może zostać zaakceptowany automatycznie tylko przy zapisanej zgodzie
 
 W panelu **PROD → Harmonogram**:
 
-1. Zaznacz testy: **Konto nauczyciela i materiały**, **Dostępność stron** albo oba zestawy. Opisy przy wyborze wyjaśniają ich zakres.
+1. Zaznacz testy: **Konto nauczyciela i materiały**, **Dostępność ekranów wejścia** albo oba zestawy. Opisy przy wyborze wyjaśniają ich zakres.
 2. Dla testów konta wybierz nauczyciela. Panel pokaże jego zakres i liczbę kontroli. Same testy dostępności stron nie wymagają konta.
 3. Ustaw odstęp, zaznacz automatyczne uruchamianie i kliknij **Zapisz wybór i harmonogram**. Podsumowanie rozróżnia zapisany zakres i zmiany oczekujące na zapis.
 

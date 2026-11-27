@@ -10,7 +10,7 @@ const test=base.extend({context:async({browser},use)=>{
  await context.route('**/*',route=>['GET','HEAD','OPTIONS'].includes(route.request().method())?route.fallback():route.abort());
  try{await use(context);}finally{await test.info().attach('kontrola-domen',{body:JSON.stringify({niedozwolone:[...blocked]}),contentType:'application/json'});await context.close();expect([...blocked],'Wyłącznie skonfigurowane hosty PROD').toEqual([]);}
 }});
-for(const site of websiteDefinitions)test('WEB-01/'+site.id+' — '+site.name+': dostępność strony',async({page})=>{
+for(const site of websiteDefinitions)test('WEB-01/'+site.id+' — '+site.name+': dostępność ekranu wejścia',async({page})=>{
  const start=performance.now();let httpStatus,elapsedMs,finalURL;
  try{
   await test.step('HTTPS, odpowiedź HTTP i HTML właściwej aplikacji',async()=>{

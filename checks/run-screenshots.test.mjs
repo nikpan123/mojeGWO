@@ -36,6 +36,6 @@ test('nazwy kontroli pozostają czytelne także bez konfiguracji materiału',()=
  assert.equal(readableTestName('HC-03/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa — otwarcie i podstawowa funkcja'),'Sprawdzenie działania materiału');
  assert.equal(readableTestName('HC-02/old-id — nauczyciel ma aktywny dostęp: Matematyka'),'Sprawdzenie dostępu — Matematyka');
  assert.equal(readableTestName('HC-01 — panel działa i sesja należy do właściwego nauczyciela',{accountDisplayName:'Anna Nowak'}),'Konto nauczyciela — Anna Nowak');
- assert.equal(readableTestName('WEB-01/moje-gwo — moje.gwo: dostępność strony'),'moje.gwo: dostępność strony');
+ assert.equal(readableTestName('WEB-01/moje-gwo — moje.gwo: dostępność ekranu wejścia'),'moje.gwo: dostępność ekranu wejścia');
  assert.equal(readableTestName('EP-02/api — czas odpowiedzi',{serviceHealth:{services:[{id:'api',name:'Przykładowa usługa'}]}}),'czas odpowiedzi — Przykładowa usługa');
 });

@@ -62,6 +62,7 @@ test('panel przełącza TEST i PROD, zachowuje funkcje i działa na telefonie',a
   await expect(page.locator('#teacher-choice option')).toHaveCount(1);assert.equal(await page.locator('#load-form').count(),0);
   await page.locator('nav a[href="#run"]').click();await expect(page.locator('#run')).toBeDisabled();
   assert.equal(await page.locator('#suite-choice option[value="websites"]').count(),1);
+  await expect(page.locator('#suite-choice option[value="websites"]')).toHaveText('Dostępność ekranów wejścia — 3 ekrany');
   async function checkGitlabFields(environment){
    await page.locator('nav a[href="#teachers"]').click();const isTest=environment==='test';let saves=0;
    const endpoint='**/'+environment+'/api/teachers/save';

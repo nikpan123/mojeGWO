@@ -221,7 +221,7 @@ Przy wybranym, aktywnym dostępie nauczycielskim kliknij **Dodaj do kontroli**. 
 | --- | --- | --- |
 | Tylko obecność i ważność dostępu | Materiał oraz rodzaj. | Dostęp nauczycielski i jego ważność; materiał nie jest otwierany. |
 | Czytnik — dostęp i zmiana stron | Multipodręcznik; grupa i adres, jeśli są potrzebne do rozpoznania. | Otwarcie czytnika, załadowane obrazy stron i przejście do następnej rozkładówki. |
-| Kompozytor — dostęp i lista zestawów | Rodzaj **Aplikacja**, właściwy adres i nazwa klasy lub biblioteki, np. `7`. | Otwarcie wskazanej klasy/biblioteki i pojawienie się zakładki **Twoje zestawy**. |
+| Kompozytor — dostęp i lista zestawów | Rodzaj **Aplikacja**, właściwy adres i nazwa klasy lub biblioteki, np. `7`. | Otwarcie klasy/biblioteki, poprawne pobranie i wyświetlenie listy **Twoje zestawy** albo potwierdzonej pustej listy. |
 | Karty pracy — katalog zadań klas 1–3 | Rodzaj **Aplikacja** i adres katalogu danego środowiska. | Katalog i obrazy zadań w widoku komponowania; bez zapisywania zestawu. |
 | Pełny test według istniejącego wzorca | Wzorzec pasujący do konkretnej aplikacji. | Czynność i rezultat z wcześniej przygotowanego wzorca. |
 
@@ -292,7 +292,7 @@ Wybierz **Kompozytor — dostęp i lista zestawów**. Wpisz klasę lub bibliotek
 
 ![Konfiguracja Kompozytora z wyborem klasy](images/konfiguracja-kompozytora.png)
 
-Test otwiera bibliotekę i sprawdza **Twoje zestawy**. Nie tworzy, nie edytuje i nie usuwa zestawów. Zgodę na automatyczną akceptację regulaminu zaznaczaj świadomie dla rozpoznanej aplikacji; bez zapisanej zgody blokujący regulamin wymaga obsługi przed testem.
+Test otwiera bibliotekę i sprawdza **Twoje zestawy**: odpowiedź HTTP 200, listę JSON dla właściwej biblioteki, zakończenie ładowania oraz zgodność liczby i nazw widocznych zestawów z serwerem. Gdy lista z API jest pusta (`[]`), wymaga komunikatu „Nie masz jeszcze utworzonego zestawu zadań.”. Sam widoczny przycisk zakładki, loader, błąd serwera lub niepoprawna odpowiedź nie zaliczają testu. Raport zawiera potwierdzenie pobrania listy i liczbę zestawów. Test nie tworzy, nie edytuje i nie usuwa zestawów. Zgodę na automatyczną akceptację regulaminu zaznaczaj świadomie dla rozpoznanej aplikacji; bez zapisanej zgody blokujący regulamin wymaga obsługi przed testem.
 
 ### Karty pracy i wzorce
 
@@ -346,7 +346,7 @@ Widok **Scenariusze** opisuje kontrole, a nie wyniki. Zestawy są pogrupowane; m
 
 Harmonogram jest dostępny w **PROD → Harmonogram**.
 
-1. Zaznacz **Konto nauczyciela i materiały**, **Dostępność stron** albo oba zestawy.
+1. Zaznacz **Konto nauczyciela i materiały**, **Dostępność ekranów wejścia** albo oba zestawy.
 2. Dla zestawu konta wybierz nauczyciela. Będą używane jego aktualne, włączone materiały. Wybór harmonogramu jest niezależny od ręcznego wyboru nauczyciela.
 3. Ustaw odstęp od 1 do 10080 minut.
 4. Zaznacz automatyczne uruchamianie i kliknij **Zapisz wybór i harmonogram**.
@@ -364,9 +364,9 @@ Liczniki podsumowują **ostatnie 100 wpisów dziennika**, nie całą historię i
 
 ## 9. Pozostałe zestawy i Mattermost
 
-### Dostępność stron — PROD
+### Dostępność ekranów wejścia — PROD
 
-W **Uruchom testy** wybierz **Dostępność stron — 3 strony**. Zestaw otwiera publiczne ekrany moje.gwo, Multipodręczników i Kompozytora, sprawdza odpowiedź, właściwy ekran oraz czas do 15 sekund. Nie wymaga konta nauczyciela ani przypisanych materiałów; wymaga włączonego PROD i właściwej listy dozwolonych domen. Można wybrać go również w harmonogramie.
+W **Uruchom testy** wybierz **Dostępność ekranów wejścia — 3 ekrany**. Zestaw otwiera publiczne ekrany moje.gwo, Multipodręczników i Kompozytora, sprawdza odpowiedź, właściwy ekran oraz czas do 15 sekund. Nie wymaga konta nauczyciela ani przypisanych materiałów; wymaga włączonego PROD i właściwej listy dozwolonych domen. Można wybrać go również w harmonogramie.
 
 ### Endpointy healthcheck — TEST i PROD
 
