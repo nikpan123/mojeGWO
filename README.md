@@ -1,75 +1,93 @@
-# Moje GWO — testy TEST i PROD
+# Moje GWO — TEST i PROD
 
-Wspólne repozytorium dwóch niezależnych projektów:
+Jeden projekt, jedna instalacja i wspólny panel. Środowisko wybierasz w polu **Środowisko** albo parametrem `--env test` / `--env prod`. Domyślnie wybierany jest TEST.
 
-| Folder | Zawartość |
-| --- | --- |
-| `MojeGwo/` | Testy środowiska TEST, panel i testy obciążeniowe. |
-| `MojeGwoProd/` | Testy środowiska PROD, panel, harmonogram i powiadomienia. |
+## Instalacja i panel
 
-Pliki źródłowe skopiowano z dotychczasowych folderów. Oryginały pozostają w swoich lokalizacjach. Dalsze zmiany w tym repozytorium i w oryginałach nie synchronizują się automatycznie.
-
-## Instalacja
-
-Wymagane: Node.js z npm oraz Git. W PowerShell, w folderze repozytorium:
+Wymagane: Node.js 22 lub nowszy oraz npm.
 
 ```powershell
-npm --prefix MojeGwo ci
-npm --prefix MojeGwoProd ci
+npm.cmd ci
+npx.cmd playwright install chromium
+npm.cmd run panel
 ```
 
-Przed pierwszym uruchomieniem testów przeglądarkowych zainstaluj Chromium:
+Otwórz **http://127.0.0.1:4182**. Panel umożliwia przełączanie TEST i PROD. Adresy `/test/` i `/prod/` można też otworzyć w osobnych kartach. Zmiana środowiska nie przenosi kont i nie zmienia środowiska trwających testów. Otwarcie panelu nie uruchamia testów; wcześniej zapisany i włączony harmonogram PROD wznawia działanie po otwarciu tego środowiska.
+
+## Konfiguracja
+
+Skopiuj wzorce tylko dla plików, których jeszcze nie masz:
 
 ```powershell
-Push-Location MojeGwo
-npx playwright install chromium
-Pop-Location
+Copy-Item .env.test.example .env.test
+Copy-Item .env.prod.example .env.prod
+Copy-Item config/test.example.json config/test.local.json
+Copy-Item config/prod.example.json config/prod.local.json
 ```
 
-## Osobna konfiguracja TEST i PROD
+Uzupełnij konto, materiały, adresy i selektory osobno dla każdego środowiska.
+
+| Środowisko | Plik | Nauczyciel | GitLab |
+| --- | --- | --- | --- |
+| TEST | `.env.test` | `MOJE_GWO_TEST_USERNAME`, `MOJE_GWO_TEST_PASSWORD` | `GITLAB_TEST_USERNAME`, `GITLAB_TEST_PASSWORD` |
+| PROD | `.env.prod` | `MOJE_GWO_PROD_USERNAME`, `MOJE_GWO_PROD_PASSWORD` | `GITLAB_PROD_USERNAME`, `GITLAB_PROD_PASSWORD`, jeśli używany |
+
+Zmienne procesu mają pierwszeństwo przed plikiem danego środowiska. Brakujące dane PROD nie są zastępowane danymi TEST. PROD wymaga kompletnej konfiguracji, potwierdzonego `authMode` i świadomego ustawienia `runEnabled: true`. Sam wybór PROD nie włącza testów.
+
+## Polecenia
 
 ```powershell
-Copy-Item MojeGwo/.env.example MojeGwo/.env
-Copy-Item MojeGwo/config/test.example.json MojeGwo/config/test.local.json
-Copy-Item MojeGwoProd/.env.example MojeGwoProd/.env
-Copy-Item MojeGwoProd/config/prod.example.json MojeGwoProd/config/prod.local.json
+npm.cmd run panel                       # wspólny panel, start w TEST
+npm.cmd run panel -- --env prod          # wspólny panel, start w PROD
+npm.cmd run test:list -- --env test      # lista bez logowania i testowania
+npm.cmd run test:list -- --env prod
+npm.cmd test -- --env test               # rzeczywiste testy TEST
+npm.cmd test -- --env prod               # rzeczywiste testy PROD
+npm.cmd run auth:check -- --env test
+npm.cmd run test:services -- --env prod
+npm.cmd run test:pages -- --env prod
+npm.cmd run report -- --env test
+npm.cmd run check:local                  # lokalne kontrole obu środowisk
+npm.cmd run check:local -- --env prod
 ```
 
-Wykonaj kopiowanie tylko dla brakujących plików, aby nie nadpisać swoich ustawień. Uzupełnij dane logowania, konto, materiały i selektory osobno dla każdego środowiska. Wzorzec PROD ma `runEnabled: false`; przed świadomym uruchomieniem testów produkcyjnych wymaga kompletnej konfiguracji. Nigdy nie używaj sesji TEST jako sesji PROD.
+Można też ustawić `MOJE_GWO_ENV=test` lub `MOJE_GWO_ENV=prod`. Inne nazwy są odrzucane.
 
-Repozytorium nie zawiera haseł, lokalnych ustawień, profili nauczycieli, sesji przeglądarki, historii ani raportów. Potrzebne pliki `.env` i `config/*.local.json` możesz przenieść lokalnie z odpowiadających im oryginalnych folderów; pozostają ignorowane przez Git. Profile i zaszyfrowane hasła są związane z lokalną instalacją i kontem Windows.
+## Funkcje
 
-## Uruchamianie
+- **Oba środowiska:** profile nauczycieli, materiały, weryfikacja konta, testy funkcjonalne, logi, podgląd przeglądarki, raporty i healthchecki usług.
+- **TEST:** ręczne testy obciążeniowe k6. Silnik umieść lokalnie w `tools/k6.exe`. Obciążenie na PROD jest blokowane również w API.
+- **PROD:** anonimowa dostępność trzech stron, harmonogram lokalny i powiadomienia Mattermost. Harmonogram wymaga działającego panelu i komputera. Powiadomienia są domyślnie wyłączone; webhook wpisz do `.env.prod` jako `MOJE_GWO_MATTERMOST_WEBHOOK_URL`.
 
-Polecenia wykonuj w folderze wybranego projektu:
+Adresy healthchecków wymagają potwierdzenia i są zapisywane osobno w `config/service-health.test.local.json` i `config/service-health.prod.local.json`. Strona główna nie zastępuje endpointu healthcheck.
 
-```powershell
-cd MojeGwo
-npm run check:local
-npm run panel
+## Układ projektu
+
+```text
+config/                  wzorce i konfiguracja środowisk
+checks/                  kontrole lokalne i integracyjne
+dashboard/              wspólny panel i obsługa środowisk
+lib/                     wspólne biblioteki
+scripts/                 wspólne polecenia
+tests/                  wspólne scenariusze Playwright
+load/                    scenariusz obciążenia TEST
+.health/test/            lokalne profile, historia i raporty TEST
+.health/prod/            lokalne profile, historia i raporty PROD
+playwright/.auth/test/   sesje TEST
+playwright/.auth/prod/   sesje PROD
 ```
 
-Dla PROD przejdź zamiast tego do `MojeGwoProd`. `npm test` uruchamia rzeczywiste testy wskazanego środowiska i wymaga konfiguracji oraz konta. `npm run check:local` sprawdza projekt lokalnie.
+Hasła, sesje, lokalne ustawienia i wyniki są ignorowane przez Git. Nowe hasła profili są szyfrowane dla bieżącego konta Windows. Instalacja z GitHuba wymaga własnej konfiguracji.
 
-Testy obciążeniowe TEST wymagają dodatkowo lokalnego silnika `MojeGwo/tools/k6.exe`, który nie jest przechowywany w Git.
+## Przeniesienie ze starego układu
 
-Szczegóły funkcji: [TEST](MojeGwo/README.md) i [PROD](MojeGwoProd/README.md). Dokumentacja tych projektów zawiera również historyczne wyniki i ścieżki pierwotnych instalacji; nie stanowią one wyników nowej kopii. Integrację z dotychczasowym Centrum należy skonfigurować osobno, jeśli ma wskazywać tę kopię.
+Oryginalne foldery poza tym repozytorium pozostają bez zmian. Przenosząc konfigurację TEST, zmień nazwy zmiennych na `*_TEST_*` i `sessionFile` na `playwright/.auth/test/teacher.json`. Konfigurację PROD przenieś do `config/prod.local.json`, a jego `.env` do `.env.prod`. Nie kopiuj sesji między środowiskami. Najprościej ponownie dodać nauczycieli i zalogować ich ze wspólnego panelu. Dawne integracje wskazujące osobne porty należy skierować na `/test/` lub `/prod/` nowego panelu. Kopia w tym repozytorium nie synchronizuje się automatycznie z pierwotnymi folderami.
 
-## Wysłanie na GitHuba
+## GitHub
 
-Utwórz na GitHubie puste repozytorium, bez README, licencji i pliku `.gitignore`. Ze względu na kod i szczegóły infrastruktury firmowej zalecana widoczność to **Private**.
-
-Następnie w głównym folderze tego repozytorium wykonaj poniższe polecenia, zastępując przykładowy adres adresem swojego repozytorium:
+Repozytorium: [nikpan123/mojeGWO](https://github.com/nikpan123/mojeGWO).
 
 ```powershell
-git remote add origin https://github.com/TWOJ_LOGIN/NAZWA_REPOZYTORIUM.git
-git push -u origin main
-```
-
-Pierwszy commit jest przygotowany lokalnie. Kolejne zmiany zapisuj i wysyłaj tak:
-
-```powershell
-git status
 git add .
 git commit -m "Opis zmian"
 git push

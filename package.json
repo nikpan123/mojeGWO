@@ -1,0 +1,30 @@
+{
+  "name": "moje-gwo-healthcheck",
+  "version": "0.2.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "panel": "node dashboard/server.mjs",
+    "auth": "node scripts/run.mjs auth",
+    "auth:check": "node scripts/run.mjs auth:check",
+    "auth:force": "node scripts/run.mjs auth:force",
+    "check:config": "node scripts/run.mjs check:config",
+    "check:local": "node scripts/check-local.mjs",
+    "test": "node scripts/run.mjs test",
+    "test:headed": "node scripts/run.mjs test:headed",
+    "test:list": "node scripts/run.mjs test:list",
+    "report": "node scripts/run.mjs report",
+    "test:services": "node scripts/run.mjs test:services",
+    "test:services:list": "node scripts/run.mjs test:services --list",
+    "test:pages": "node scripts/run.mjs test:pages",
+    "test:pages:list": "node scripts/run.mjs test:pages --list",
+    "check:auth": "node checks/auth.test.mjs",
+    "check:ui": "node --test checks/panel-ui.test.mjs"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.58.0"
+  }
+}

@@ -1,8 +1,0 @@
-node_modules/
-playwright/.auth/
-playwright-report/
-test-results/
-.env*
-!.env.example
-.health/
-config/prod.local.json
